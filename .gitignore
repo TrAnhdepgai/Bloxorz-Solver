@@ -2,3 +2,6 @@ __pycache__/
 .pytest_cache/
 results.csv
 .venv/
+*.pyc
+.idea/
+.vscode/
