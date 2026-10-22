@@ -1,0 +1,14 @@
+{
+  "name": "Narrow Ribbon",
+  "hint": "Nằm rồi đứng, đứng rồi nằm: nghĩ trước vài nước.",
+  "difficulty": 4,
+  "optimal_moves": 11,
+  "grid": [
+    "SOOO......",
+    "OOOO......",
+    "..OOOOO...",
+    "..OOOOOO..",
+    "......OOOO",
+    "......OOOG"
+  ]
+}
