@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bloxorz ♡</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Playfair+Display:ital,wght@1,500&display=swap">
+<style>
+:root{
+  --cream:#FFF9C4;          /* nền trang */
+  --soft:#FFFFFF;           /* butter nhạt: nút, thẻ */
+  --soft2:#e1ffe1;
+
+  --accent:#FFE082;         /* vàng gà con */
+  --accent-line:#FFD54F;    /* viền vàng */
+  --accent-dk:#FFCA28;
+
+  --ink:#25477B;            /* chữ: xanh navy */
+  --muted:#4A6B9A;
+
+
+  --mint:#82E0AA;
+  --mint-dk:#27AE60;
+  --sky:#B2EBF2;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;color:var(--ink);font-family:"Nunito","Segoe UI","Helvetica Neue",Arial,system-ui,sans-serif}
+html{background:radial-gradient(ellipse at 50% 40%,#FFF6CE 0%,#FAEDB9 70%,#F6E5A4 100%)}
+body::before{content:"";position:fixed;inset:0;z-index:-1;background:radial-gradient(ellipse at 50% 40%,#FFF3B0 0%,#FFE98A 75%,#FFE27A 100%);opacity:0;transition:opacity .9s}
+html.win body::before{opacity:1}
+#decor{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+#decor .dc{position:absolute;will-change:transform}
+#decor .float{animation:bob 7s ease-in-out infinite}
+#decor .float svg{display:block;width:100%;height:auto;filter:drop-shadow(0 6px 10px rgba(205,180,100,.28))}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+#cloud-shadow{position:absolute;left:55%;top:50%;width:62vw;transform:translate(-50%,-50%);filter:blur(16px)}
+@media (prefers-reduced-motion:reduce){#decor .float{animation:none}}
+canvas{display:block;position:fixed;inset:0;touch-action:none}
+#hud{position:fixed;left:28px;top:20px;pointer-events:none}
+#title{display:inline-block;font-family:"Playfair Display",Georgia,"Times New Roman",serif;font-style:italic;font-weight:500;font-size:34px;margin:0 0 0 -8px;padding:0 8px;
+  background:linear-gradient(transparent 62%,rgba(255,228,90,.9) 62%,rgba(255,228,90,.9) 92%,transparent 92%)}
+#info{margin-top:6px;color:var(--muted);font-size:15px}
+#msg{margin-top:10px;font-size:15px;color:var(--mint-dk);min-height:22px}
+#bow{position:fixed;right:28px;top:22px;pointer-events:none}
+#bar{position:fixed;left:0;right:0;bottom:46px;display:flex;gap:12px;justify-content:center;align-items:center;flex-wrap:wrap}
+select{font:600 15px "Nunito","Segoe UI",system-ui,sans-serif;background:#fff;border:3px solid #F4A93A;color:var(--ink);border-radius:999px;padding:10px 14px;cursor:pointer;max-width:130px}
+button{font:600 15px "Nunito","Segoe UI",system-ui,sans-serif;background:#fff;border:3px solid #F4A93A;color:var(--ink);border-radius:999px;padding:10px 24px;cursor:pointer;position:relative;overflow:hidden;
+  box-shadow:0 5px 0 #F0C46A;
+  transition:background .2s,transform .2s cubic-bezier(.22,1.4,.36,1),box-shadow .2s,border-color .2s,color .2s}
+button:hover:not(:disabled){background:#FFF7D6;transform:translateY(-2px) scale(1.03);box-shadow:0 7px 0 #EFB84E,0 14px 22px rgba(244,169,58,.32);border-color:#EE9A25}
+button:active:not(:disabled){transform:translateY(3px);box-shadow:0 2px 0 #F0C46A}
+button:focus-visible{outline:3px solid var(--mint);outline-offset:3px}
+button::after{content:"";position:absolute;top:0;left:-70%;width:45%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.85),transparent);transform:skewX(-18deg);pointer-events:none;opacity:0}
+button:hover:not(:disabled)::after{animation:shine .75s ease}
+@keyframes shine{0%{left:-70%;opacity:1}100%{left:130%;opacity:1}}
+button:disabled{color:#9AA6B8;border-color:#D7DCE6;background:#F7F8FB;box-shadow:0 5px 0 #E1E5EE;cursor:default}
+button.round{width:46px;height:46px;padding:0;font-size:18px}
+#keys{position:fixed;bottom:14px;left:0;right:0;text-align:center;color:var(--muted);font-size:13px}
+
+[hidden]{display:none!important}
+#menu{position:fixed;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;background:rgba(255,253,240,.30);backdrop-filter:blur(1.5px);-webkit-backdrop-filter:blur(1.5px);transition:opacity .35s}
+#menu.off{opacity:0;pointer-events:none}
+#menu .card{width:min(420px,92vw);max-height:90vh;overflow:auto;background:#FFFEF8;border:2px solid #FFE88A;border-radius:32px;padding:34px 34px 30px;text-align:center;box-shadow:0 18px 50px rgba(247,207,46,.28);transition:transform .25s ease-out;will-change:transform}
+.logo{display:inline-block;font-family:"Playfair Display",Georgia,"Times New Roman",serif;font-style:italic;font-weight:500;font-size:54px;margin:6px 0 0;padding:0 10px;
+  background:linear-gradient(transparent 60%,rgba(255,228,90,.9) 60%,rgba(255,228,90,.9) 92%,transparent 92%)}
+.tag{margin:6px 0 22px;color:var(--muted);font-size:15px}
+.stack{display:flex;flex-direction:column;gap:12px}
+.stack button{width:100%;padding:14px 22px;font-size:16px}
+button.primary{background:#FFE082;border-color:#F4A93A;color:#5A4000}
+button.primary:hover:not(:disabled){background:#FFD54F}
+.stack button::before{content:"♡";position:absolute;left:20px;top:50%;transform:translate(-10px,-50%) scale(.5);opacity:0;color:var(--mint-dk);transition:transform .35s cubic-bezier(.22,1.6,.36,1),opacity .25s}
+.stack button:hover:not(:disabled)::before{opacity:1;transform:translate(0,-50%) scale(1)}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+#menu:not(.off) .stack button{animation:rise .55s cubic-bezier(.22,1,.36,1) backwards}
+.stack button:nth-child(2){animation-delay:.07s!important}
+.stack button:nth-child(3){animation-delay:.14s!important}
+.stack button:nth-child(4){animation-delay:.21s!important}
+h3{font-family:"Playfair Display",Georgia,"Times New Roman",serif;font-style:italic;font-weight:500;font-size:28px;margin:0 0 10px}
+#achSum{color:var(--mint-dk);font-size:14px;margin-bottom:14px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 4px;border-bottom:1px dashed rgba(247,207,46,.55);font-size:15px;text-align:left}
+.row .sc{color:var(--muted);white-space:nowrap}
+.back{margin-top:18px}
+.danger{margin-top:14px;font-size:14px;padding:9px 18px}
+input[type=checkbox]{appearance:none;-webkit-appearance:none;width:46px;height:26px;border-radius:99px;background:#E6F4FC;border:2px solid var(--sky);position:relative;cursor:pointer;flex:none;transition:background .2s,border-color .2s}
+input[type=checkbox]::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(62,103,136,.3);transition:transform .2s}
+input[type=checkbox]:checked{background:#FFD54F;border-color:#F4A93A}
+input[type=checkbox]:checked::after{transform:translateX(20px)}
+
+#resultOverlay{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(37,71,123,.22);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+#resultOverlay[hidden]{display:none}
+#resultOverlay .result-card{width:min(440px,94vw);background:#FFFEF8;border:3px solid #FFE082;border-radius:30px;padding:28px 26px 24px;text-align:center;box-shadow:0 18px 55px rgba(37,71,123,.22),0 7px 0 #F0C46A;animation:resultPop .35s cubic-bezier(.22,1.4,.36,1)}
+#resultOverlay h2{font-family:"Playfair Display",Georgia,serif;font-style:italic;font-size:32px;font-weight:500;margin:0 0 8px}
+#resultOverlay .result-sub{margin:0;color:var(--muted);font-size:15px}
+#resultStars{display:flex;justify-content:center;gap:5px;margin:16px 0 10px;font-size:42px;line-height:1;color:#D7DCE6;text-shadow:0 2px 0 rgba(37,71,123,.08)}
+#resultStars .earned{color:#FFC53D;text-shadow:0 3px 0 #EFAE32}
+#resultScore{font-weight:700;color:var(--mint-dk);font-size:17px;margin:10px 0 20px}
+#resultActions{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
+#resultActions button{padding:11px 17px}
+#resultNext{background:#FFE082}
+@keyframes resultPop{from{opacity:0;transform:translateY(12px) scale(.94)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(max-width:420px){#resultOverlay .result-card{padding:24px 16px 20px}#resultStars{font-size:36px}#resultActions button{padding:10px 13px}}
+
+@media (prefers-reduced-motion:reduce){button::after{display:none}#menu:not(.off) .stack button{animation:none}#resultOverlay .result-card{animation:none}}
+</style>
+</head>
+<body>
+<div id="decor">
+  <svg id="cloud-shadow" viewBox="0 0 800 440"><g fill="rgba(165,135,70,.15)"><circle cx="250" cy="260" r="150"/><circle cx="430" cy="190" r="190"/><circle cx="620" cy="270" r="140"/><rect x="120" y="260" width="620" height="150" rx="75"/></g></svg>
+</div>
+<div id="hud"><h1 id="title"></h1><div id="info"></div><div id="msg"></div></div>
+<svg id="bow" width="56" height="42" viewBox="0 0 46 34"><path d="M23 17 L3 4 L3 30 Z M23 17 L43 4 L43 30 Z" fill="#FFC53D" stroke="#F08A24" stroke-width="1.6" stroke-linejoin="round"/><circle cx="23" cy="17" r="5.5" fill="#FFD66B" stroke="#F08A24" stroke-width="1.6"/></svg>
+<div id="bar">
+  <button id="menuBtn">☰ Menu</button>
+  <button id="restart">Restart</button>
+  <select id="solverAlgorithm" aria-label="Thuật toán giải" title="Chọn thuật toán giải">
+    <option value="bfs">BFS</option><option value="dfs">DFS</option><option value="ids">IDS</option><option value="ucs">UCS</option>
+  </select>
+  <button id="solve" title="Tìm lời giải bằng thuật toán đã chọn">Solve · BFS</button>
+  <button id="rl" class="round" title="Xoay trái (Q)">↺</button>
+  <button id="rr" class="round" title="Xoay phải (E)">↻</button>
+</div>
+<div id="keys">← ↑ ↓ → hoặc WASD để lăn · Q / E hoặc kéo chuột để xoay góc nhìn · R chơi lại · Esc mở menu · N / [ ] đổi màn</div>
+
+<div id="resultOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+  <div class="result-card">
+    <h2 id="resultTitle">Màn chơi hoàn thành! ♡</h2>
+    <p class="result-sub" id="resultLevel"></p>
+    <div id="resultStars" aria-label="Đánh giá sao"></div>
+    <div id="resultScore"></div>
+    <div id="resultActions">
+      <button id="resultNext" class="primary">Màn tiếp theo →</button>
+      <button id="resultReplay">↻ Chơi lại</button>
+      <button id="resultMenu">⌂ Về menu</button>
+    </div>
+  </div>
+</div>
+<div id="menu">
+  <div class="card">
+    <section id="pMain">
+      <svg width="62" height="46" viewBox="0 0 46 34"><path d="M23 17 L3 4 L3 30 Z M23 17 L43 4 L43 30 Z" fill="#FFD93D" stroke="#E9B800" stroke-width="1.2" stroke-linejoin="round"/><circle cx="23" cy="17" r="5.5" fill="#6FD9B4"/></svg><br>
+      <h2 class="logo">Bloxorz</h2>
+      <p class="tag">a cute little puzzle ♡</p>
+      <div class="stack">
+        <button id="mNew" class="primary">Bắt đầu màn mới</button>
+        <button id="mCont">Tiếp tục màn cũ</button>
+        <button id="mAch">Thành tựu cao nhất</button>
+        <button id="mSet">Cài đặt</button>
+      </div>
+    </section>
+    <section id="pAch" hidden>
+      <h3>Thành tựu cao nhất</h3><div id="achSum"></div><div id="achList"></div>
+      <button class="back">← Quay lại</button>
+    </section>
+    <section id="pSet" hidden>
+      <h3>Cài đặt</h3><div id="setList"></div>
+      <button id="resetAll" class="danger">Xóa tiến độ &amp; thành tựu</button><br>
+      <button class="back">← Quay lại</button>
+    </section>
+  </div>
+</div>
+<script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
+<script type="module" src="./main.js"></script>
+</body>
+
+</html>
