@@ -1,0 +1,11 @@
+{
+  "name": "First Steps",
+  "hint": "Lăn phải hai lần là tới nơi.",
+  "difficulty": 1,
+  "optimal_moves": 2,
+  "grid": [
+    "OOOOO",
+    "OSOOG",
+    "OOOOO"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "name": "Little Corner",
+  "hint": "Thử đứng dậy đúng chỗ nhé.",
+  "difficulty": 2,
+  "optimal_moves": 7,
+  "grid": [
+    "SOOO...",
+    "OOOO...",
+    "OOOOOG.",
+    "..OOOO."
+  ]
+}
