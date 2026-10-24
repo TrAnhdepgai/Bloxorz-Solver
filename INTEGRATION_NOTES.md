@@ -35,3 +35,29 @@ The existing six GUI levels use only basic floor tiles. The engine supports frag
 - Nút Tiếp tục trong menu sẽ khởi tạo lại level nếu trạng thái trước đó là won/fell, tránh đóng menu nhưng giữ trạng thái khóa điều khiển.
 
 - Additional fix: `loadLevel()` now resets `resultShown` and `winT` and hides the result overlay before initializing the new level, preventing the previous level's win timer from reopening the result panel.
+
+## Cập nhật: cost hook, /api/step, metrics, main.py
+
+### main.py (điểm vào duy nhất)
+- `main.py` is the single entry point (`python main.py` launches the Three.js web GUI; `solve` and `experiments` subcommands are also available). `serve.py` holds the HTTP server and API code that `main.py` calls. The old Pygame source remains in `gui/` but is no longer the default entry point.
+- `python main.py` = `python main.py serve` (có `--port N`, `--no-browser`).
+- `python main.py solve --level levels/<file>.json --algo bfs [--no-memory]`: giải 1 level, in time/memory/expanded/length.
+- `python main.py experiments --engine engine.engine:Engine [--no-memory]`: chạy `run_experiments.py`, ghi `results.csv`.
+
+### Cost hook
+- `Engine(level_path, cost_fn=None)`; `cost_fn(state, action, next_state) -> float` (không âm). Mặc định tra bảng `COST` trong `engine/engine.py`.
+- Solver không đổi: dùng `step_cost` do `get_successors` trả về. BFS/DFS/IDS tối ưu theo số bước; chỉ UCS tối ưu theo cost.
+
+### API
+- `GET /api/solvers`: tên các solver trong registry `solvers.SOLVERS` (thêm solver mới chỉ cần đăng ký ở `solvers/__init__.py`).
+- `POST /api/solve` `{level_index, algorithm, measure_memory?}` trả thêm `length`, `cost`, `time_s`, `time_ms`, `peak_mem_kb` (null nếu không đo), `valid`. Các key cũ (`ok, solvable, path, expanded`) giữ nguyên.
+- `POST /api/step` `{level_index, state?, action?}` (`action` thuộc U/D/L/R/SWAP; bỏ `state` thì dùng state đầu; bỏ `action` thì chỉ mô tả state). Trả `valid, won, cost, state, cells, actions, tiles`.
+  - `valid:false` = nước đi không hợp lệ, `state` giữ nguyên.
+  - State split: `orient` là `"S"`, `row/col` chỉ là giá trị giữ chỗ; vị trí thật ở `state.split.cubes` và `cells`.
+  - `tiles[r][c]` có `type` (empty/floor/fragile/switch/bridge), `walkable`, `fragile`, `bridge {id, open}`, `switches`, `start`, `goal`, theo đúng state hiện tại.
+- Chi tiết request/response mẫu: xem `README.md`.
+
+### Lưu ý
+- GUI hiện vẫn tự mô phỏng nước đi bằng JS và chưa gọi `/api/step`. Khi làm bước đồng bộ UI cho fragile/bridge/switch/split, dùng `/api/step` làm nguồn đúng (engine là nguồn luật chơi duy nhất).
+- Mọi file lưu bằng UTF-8; serve.py trả `charset=utf-8`.
+- Test: `python -m pytest -q` (test mới: `tests/test_serialize_step_solve.py`).
