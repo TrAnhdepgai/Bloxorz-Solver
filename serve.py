@@ -1,4 +1,4 @@
-"""Cháº¡y GUI 3D: python serve.py. Phá»¥c vá»¥ web vÃ  API level/solver."""
+"""Chạy GUI 3D: python serve.py. Phục vụ web và API level/solver."""
 import json
 import tempfile
 import threading
@@ -7,11 +7,12 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
 
-from engine.engine import Engine
-from solvers import bfs, dfs, ids, ucs
+from engine.engine import ACTIONS, TRANSITIONS, Engine
+from engine.state import SplitState, State
+from metrics import run_solver
+from solvers import SOLVERS
 
 ROOT = Path(__file__).resolve().parent
-SOLVERS = {"bfs": bfs, "dfs": dfs, "ids": ids, "ucs": ucs}
 
 
 def load_gui_levels():
@@ -32,7 +33,7 @@ def to_engine_level(data):
             chars.append("." if ch == "." else "#")
         converted.append("".join(chars))
     if start is None or goal is None:
-        raise ValueError("Level cáº§n cÃ³ Ä‘Ãºng má»™t Ã´ báº¯t Ä‘áº§u S vÃ  Ã´ Ä‘Ã­ch G")
+        raise ValueError("Level cần có đúng một ô bắt đầu S và ô đích G")
     out = {"grid": converted, "start": start, "goal": goal}
     # Pass through engine-supported special mechanics if a level defines them.
     for key in ("fragile", "bridges", "bridges_initial_open", "switches"):
@@ -40,12 +41,11 @@ def to_engine_level(data):
     return out
 
 
-def solve_level(index, algorithm):
+def make_problem(index):
+    """Dựng Engine cho level thứ `index` trong gui_levels. Trả về (problem, tên level)."""
     levels = load_gui_levels()
     if not isinstance(index, int) or index < 0 or index >= len(levels):
-        raise ValueError("level_index khÃ´ng há»£p lá»‡")
-    if algorithm not in SOLVERS:
-        raise ValueError("algorithm pháº£i lÃ  bfs, dfs, ids hoáº·c ucs")
+        raise ValueError("level_index không hợp lệ")
     engine_data = to_engine_level(levels[index])
     # Engine's public constructor accepts a JSON path; use a temporary file so the
     # adapter does not mutate the user's original level JSON.
@@ -54,12 +54,123 @@ def solve_level(index, algorithm):
         temp_path = f.name
     try:
         problem = Engine(temp_path)
-        outcome = SOLVERS[algorithm](problem)
-        return {"ok": True, "level": levels[index].get("name", f"Level {index + 1}"),
-                "algorithm": algorithm, "path": outcome.path, "cost": outcome.cost,
-                "expanded": outcome.expanded, "solvable": outcome.path is not None}
     finally:
         Path(temp_path).unlink(missing_ok=True)
+    return problem, levels[index].get("name", f"Level {index + 1}")
+
+
+# ---------- serialize / deserialize State cho API ----------
+def serialize_state(state):
+    return {
+        "orient": state.orient,
+        "row": state.row,
+        "col": state.col,
+        "bridges": sorted(state.bridges),
+        "split": None if state.split is None else {
+            "cubes": [list(c) for c in state.split.cubes],
+            "active": state.split.active,
+        },
+    }
+
+
+def _int(v, what):
+    if isinstance(v, bool) or not isinstance(v, int):
+        raise ValueError(f"{what} phải là số nguyên")
+    return v
+
+
+def parse_state(problem, data):
+    """JSON -> State. data=None nghĩa là trạng thái ban đầu của level."""
+    if data is None:
+        return problem.initial_state()
+    if not isinstance(data, dict):
+        raise ValueError("state phải là object")
+    raw_bridges = data.get("bridges", [])
+    if not isinstance(raw_bridges, list):
+        raise ValueError("state.bridges phải là danh sách id cầu")
+    bridges = frozenset(raw_bridges)
+    unknown = bridges - set(problem.bridges)
+    if unknown:
+        raise ValueError(f"state.bridges chứa id không tồn tại: {sorted(map(str, unknown))}")
+    split = data.get("split")
+    if split is not None:
+        if not isinstance(split, dict):
+            raise ValueError("state.split phải là object")
+        cubes = split.get("cubes")
+        if not isinstance(cubes, list) or len(cubes) != 2 or any(
+                not isinstance(c, list) or len(c) != 2 for c in cubes):
+            raise ValueError("state.split.cubes phải gồm đúng 2 toạ độ [r, c]")
+        cubes = tuple((_int(c[0], "cube.r"), _int(c[1], "cube.c")) for c in cubes)
+        active = _int(split.get("active", 0), "state.split.active")
+        if active not in (0, 1):
+            raise ValueError("state.split.active phải là 0 hoặc 1")
+        return State("S", 0, 0, bridges, SplitState(cubes, active))
+    orient = data.get("orient")
+    if orient not in ("S", "H", "V"):
+        raise ValueError("state.orient phải là S, H hoặc V")
+    return State(orient, _int(data.get("row"), "state.row"), _int(data.get("col"), "state.col"), bridges)
+
+
+def tiles_info(problem, state):
+    """Thông tin ô đặc biệt: fragile, bridge (kèm đang mở hay đóng), switch."""
+    return {
+        "fragile": sorted([list(p) for p in problem.fragile]),
+        "bridges": [{"id": bid, "cells": [list(p) for p in cells_], "open": bid in state.bridges}
+                    for bid, cells_ in sorted(problem.bridges.items())],
+        "switches": [{"pos": list(sw["pos"]), "type": sw["type"], "targets": list(sw["targets"]),
+                      "mode": sw["mode"], "set": sw["set"],
+                      "teleport": None if sw["teleport"] is None else [list(p) for p in sw["teleport"]]}
+                     for sw in problem.switches],
+    }
+
+
+def step_level(index, state_data, action):
+    """Đi một nước từ state cho trước. Không có state -> dùng trạng thái ban đầu."""
+    problem, name = make_problem(index)
+    state = parse_state(problem, state_data)
+    if action is not None and action not in ACTIONS and action != "SWAP":
+        raise ValueError("action phải là U, D, L, R hoặc SWAP")
+    if action == "SWAP" and state.split is None:
+        raise ValueError("SWAP chỉ dùng được khi khối đang tách đôi")
+
+    result = {"ok": True, "level": name, "action": action, "legal": True,
+              "status": "playing", "cost": None, "attempt": None}
+    new_state = state
+    if action is not None:
+        move = next(((nxt, cost) for a, nxt, cost in problem.get_successors(state) if a == action), None)
+        if move is None:
+            result["legal"] = False
+            result["status"] = "fell"          # nước đi không hợp lệ = khối rơi khỏi sàn
+            if state.split is None:
+                o, dr, dc = TRANSITIONS[(state.orient, action)]
+                result["attempt"] = {"orient": o, "row": state.row + dr, "col": state.col + dc}
+        else:
+            new_state, result["cost"] = move
+    if problem.is_goal(new_state):
+        result["status"] = "won"
+    result["state"] = serialize_state(new_state)
+    result["actions"] = [a for a, _, _ in problem.get_successors(new_state)]
+    result["tiles"] = tiles_info(problem, new_state)
+    return result
+
+
+def solve_level(index, algorithm):
+    problem, name = make_problem(index)
+    if algorithm not in SOLVERS:
+        raise ValueError("algorithm phải là " + ", ".join(SOLVERS))
+    r = run_solver(SOLVERS[algorithm], problem, name)
+    return {"ok": True, "level": name, "algorithm": algorithm,
+            "solvable": r.found, "path": r.path, "cost": r.cost,
+            "length": r.length, "expanded": r.expanded,
+            "time_ms": round(r.time_s * 1000, 3),
+            "memory_kb": round(r.peak_mem_kb, 1)}
+
+
+# endpoint POST -> hàm xử lý nhận payload (dict) và trả về dict
+ROUTES = {
+    "/api/solve": lambda p: solve_level(p.get("level_index"), p.get("algorithm", "bfs")),
+    "/api/step": lambda p: step_level(p.get("level_index"), p.get("state"), p.get("action")),
+}
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -85,16 +196,18 @@ class Handler(SimpleHTTPRequestHandler):
         super().do_GET()
 
     def do_POST(self):
-        if urlparse(self.path).path != "/api/solve":
-            self._json(404, {"ok": False, "error": "Endpoint khÃ´ng tá»“n táº¡i"})
+        handler = ROUTES.get(urlparse(self.path).path)
+        if handler is None:
+            self._json(404, {"ok": False, "error": "Endpoint không tồn tại"})
             return
         try:
             size = int(self.headers.get("Content-Length", "0"))
             if size <= 0 or size > 100_000:
-                raise ValueError("Request body khÃ´ng há»£p lá»‡")
+                raise ValueError("Request body không hợp lệ")
             payload = json.loads(self.rfile.read(size).decode("utf-8"))
-            result = solve_level(payload.get("level_index"), payload.get("algorithm", "bfs"))
-            self._json(200, result)
+            if not isinstance(payload, dict):
+                raise ValueError("Request body phải là object JSON")
+            self._json(200, handler(payload))
         except (ValueError, TypeError, KeyError, json.JSONDecodeError) as exc:
             self._json(400, {"ok": False, "error": str(exc)})
         except Exception as exc:
@@ -113,12 +226,12 @@ def main():
         except OSError:
             port += 1
     url = f"http://127.0.0.1:{port}"
-    print(f"Bloxorz 3D Ä‘ang cháº¡y táº¡i {url}  (Ctrl+C Ä‘á»ƒ táº¯t)")
+    print(f"Bloxorz 3D đang chạy tại {url}  (Ctrl+C để tắt)")
     threading.Timer(0.6, lambda: webbrowser.open(url)).start()
     try:
         srv.serve_forever()
     except KeyboardInterrupt:
-        print("\nBye â™¡")
+        print("\nBye ♡")
 
 
 if __name__ == "__main__":
