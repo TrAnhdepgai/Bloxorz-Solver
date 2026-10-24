@@ -1,8 +1,8 @@
 """Chạy các solver trên bộ màn chơi cố định, in bảng và ghi CSV.
 
 Ví dụ:
-    python run_experiments.py                                   # engine giả, mọi level trong levels/
-    python run_experiments.py --engine my_engine:Engine         # engine thật của A
+    python run_experiments.py                                   # engine thật, mọi level trong levels/
+    python run_experiments.py --engine engine.engine:Engine     # chỉ định engine rõ ràng
     python run_experiments.py --solvers bfs ucs --no-memory
 """
 import argparse
@@ -21,7 +21,7 @@ def load_engine_class(spec):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--engine", default="fake_engine:Engine", help="module:Class")
+    ap.add_argument("--engine", default="engine.engine:Engine", help="module:Class")
     ap.add_argument("--levels", default="levels", help="thư mục chứa file .json")
     ap.add_argument("--solvers", nargs="+", default=list(SOLVERS), choices=list(SOLVERS))
     ap.add_argument("--out", default="results.csv")
