@@ -1,0 +1,16 @@
+{
+  "name": "Little Corner",
+  "group": "basic",
+  "difficulty": 2,
+  "benchmark": true,
+  "hint": "Thử đứng dậy đúng chỗ nhé.",
+  "optimal_moves": 7,
+  "grid": [
+    "####...",
+    "####...",
+    "######.",
+    "..####."
+  ],
+  "start": [0, 0],
+  "goal": [2, 5]
+}

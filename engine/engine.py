@@ -1,5 +1,7 @@
+import os
+
 from .state import State, SplitState
-from .level import load_level
+from .level import Level, load_level, parse_level
 
 # (orient, action) -> (new_orient, dr, dc)
 TRANSITIONS = {
@@ -24,8 +26,14 @@ def cells(orient, r, c):
 
 
 class Engine:
-    def __init__(self, level_path: str):
-        lv = load_level(level_path)
+    def __init__(self, level):
+        """`level` có thể là đường dẫn file JSON, dict đã đọc từ JSON, hoặc đối tượng Level."""
+        if isinstance(level, (str, os.PathLike)):
+            lv = load_level(level)
+        elif isinstance(level, dict):
+            lv = parse_level(level)
+        else:
+            lv = level
         self.grid = lv.grid
         self.rows = len(lv.grid)
         self.cols = len(lv.grid[0])

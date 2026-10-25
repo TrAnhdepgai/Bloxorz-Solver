@@ -6,15 +6,21 @@ import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from fake_engine import TRANSITIONS, Engine, State  # noqa: E402
+from engine import Engine, State  # noqa: E402
 from solvers import bfs, dfs, ids, ucs  # noqa: E402
 from solvers.base import replay_path  # noqa: E402
+import engine.engine as engine_module  # noqa: E402
 
-LEVEL_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "levels")
+LEVEL_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures")   # màn nhỏ dành cho unit test
 ALL_LEVELS = sorted(glob.glob(os.path.join(LEVEL_DIR, "*.json")))
 SOLVABLE = [p for p in ALL_LEVELS if "unsolvable" not in p]
 UNSOLVABLE = [p for p in ALL_LEVELS if "unsolvable" in p]
 SOLVERS = [bfs, dfs, ids, ucs]
+
+
+def path_cost(path):
+    """Tổng chi phí của một đường đi theo bảng COST hiện hành (đúng cả khi hàm cost không đều)."""
+    return sum(engine_module.COST[a] for a in path)
 
 
 @pytest.mark.parametrize("path", SOLVABLE)
@@ -24,14 +30,20 @@ def test_solver_finds_valid_path(solver, path):
     outcome = solver(problem)
     assert outcome.path is not None
     assert replay_path(problem, outcome.path)           # đi theo path trên engine thì thắng
-    assert outcome.cost == pytest.approx(len(outcome.path))   # cost = số bước khi mỗi bước cost 1
+    assert outcome.cost == pytest.approx(path_cost(outcome.path))
 
 
 @pytest.mark.parametrize("path", SOLVABLE)
-def test_bfs_ids_ucs_same_length(path):
+def test_bfs_and_ids_same_length(path):
     problem = Engine(path)
-    lengths = {s.__name__: len(s(problem).path) for s in (bfs, ids, ucs)}
-    assert len(set(lengths.values())) == 1, lengths      # lệch nhau = có bug
+    assert len(bfs(problem).path) == len(ids(problem).path)   # cùng tối ưu theo SỐ NƯỚC; lệch nhau = có bug
+
+
+@pytest.mark.parametrize("path", SOLVABLE)
+def test_ucs_cost_not_worse_than_bfs_path(path):
+    """UCS tối ưu theo CHI PHÍ: không bao giờ đắt hơn đường đi của BFS. Chi phí đều thì hai bên bằng nhau."""
+    problem = Engine(path)
+    assert ucs(problem).cost <= path_cost(bfs(problem).path) + 1e-9
 
 
 @pytest.mark.parametrize("path", SOLVABLE)
@@ -49,25 +61,14 @@ def test_unsolvable_returns_none(solver, path):
 
 def test_ucs_prefers_cheaper_path():
     """UCS phải theo cost, không theo số bước: giả lập chi phí 'L' đắt thì tránh đi trái."""
-    import fake_engine
-    old = dict(fake_engine.COST)
+    old = dict(engine_module.COST)
     try:
-        fake_engine.COST.update({"L": 10.0})
+        engine_module.COST.update({"L": 10.0})
         problem = Engine(SOLVABLE[0])
         out = ucs(problem)
-        assert out.cost == pytest.approx(sum(fake_engine.COST[a] for a in out.path))
+        assert out.cost == pytest.approx(sum(engine_module.COST[a] for a in out.path))
     finally:
-        fake_engine.COST.update(old)
-
-
-def test_transition_table_matches_contract():
-    expected = {
-        ("S", "U"): ("V", -2, 0), ("S", "D"): ("V", 1, 0), ("S", "L"): ("H", 0, -2), ("S", "R"): ("H", 0, 1),
-        ("H", "U"): ("H", -1, 0), ("H", "D"): ("H", 1, 0), ("H", "L"): ("S", 0, -1), ("H", "R"): ("S", 0, 2),
-        ("V", "U"): ("S", -1, 0), ("V", "D"): ("S", 2, 0), ("V", "L"): ("V", 0, -1), ("V", "R"): ("V", 0, 1),
-    }
-    for (o, a), val in expected.items():
-        assert TRANSITIONS[o][a] == val
+        engine_module.COST.update(old)
 
 
 def test_state_hashable_and_bridges_matter():

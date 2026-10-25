@@ -81,8 +81,14 @@ def _parse_switch(sw, is_floor, bridges) -> dict:
 
 def load_level(path: str) -> Level:
     with open(path, encoding="utf-8") as f:
-        d = json.load(f)
+        return parse_level(json.load(f))
 
+
+def parse_level(d: dict) -> Level:
+    """Kiểm tra và chuẩn hoá một level đã ở dạng dict. Bỏ qua các trường metadata
+    (name, group, hint, difficulty, optimal_moves, benchmark...) vì engine không cần."""
+    if not isinstance(d, dict):
+        raise LevelError("level phải là một object JSON")
     for key in ("grid", "start", "goal"):
         if key not in d:
             raise LevelError(f"Thiếu trường bắt buộc '{key}'")

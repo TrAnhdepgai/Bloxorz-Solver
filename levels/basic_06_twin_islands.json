@@ -1,0 +1,15 @@
+{
+  "name": "Twin Islands",
+  "group": "basic",
+  "difficulty": 6,
+  "hint": "Hai đảo nối bằng một dải thật dài.",
+  "optimal_moves": 16,
+  "grid": [
+    "####.....###",
+    "####.....###",
+    "############",
+    "####.....###"
+  ],
+  "start": [1, 1],
+  "goal": [1, 10]
+}

@@ -1,65 +1,41 @@
-"""Cháº¡y GUI 3D: python serve.py. Phá»¥c vá»¥ web vÃ  API level/solver."""
+"""Chạy GUI 3D: python main.py (hoặc python serve.py). Phục vụ web và API level/solver."""
 import json
-import tempfile
 import threading
 import webbrowser
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
 
-from engine.engine import Engine
-from solvers import bfs, dfs, ids, ucs
+from engine import Engine
+from engine.catalog import load_catalog, to_gui_level
+from solvers import SOLVERS
 
 ROOT = Path(__file__).resolve().parent
-SOLVERS = {"bfs": bfs, "dfs": dfs, "ids": ids, "ucs": ucs}
+
+# Renderer 3D hiện chỉ vẽ và mô phỏng ô sàn thường. Thêm nhóm vào đây ("fragile", "switch",
+# "combined") khi GUI đã hỗ trợ cơ chế tương ứng, để người chơi không gặp màn không thể chơi tay.
+GUI_GROUPS = {"basic"}
+
+
+def gui_entries():
+    return load_catalog(groups=GUI_GROUPS)       # đọc lại mỗi lần gọi: sửa file level không cần restart
 
 
 def load_gui_levels():
-    files = sorted((ROOT / "gui_levels").glob("*.json"))
-    return [json.loads(f.read_text(encoding="utf-8")) for f in files]
-
-
-def to_engine_level(data):
-    """Adapt legacy O/S/G tile maps to the engine's #/. schema."""
-    grid = data.get("grid", [])
-    start = goal = None
-    converted = []
-    for r, row in enumerate(grid):
-        chars = []
-        for c, ch in enumerate(row):
-            if ch == "S": start = [r, c]
-            elif ch == "G": goal = [r, c]
-            chars.append("." if ch == "." else "#")
-        converted.append("".join(chars))
-    if start is None or goal is None:
-        raise ValueError("Level cáº§n cÃ³ Ä‘Ãºng má»™t Ã´ báº¯t Ä‘áº§u S vÃ  Ã´ Ä‘Ã­ch G")
-    out = {"grid": converted, "start": start, "goal": goal}
-    # Pass through engine-supported special mechanics if a level defines them.
-    for key in ("fragile", "bridges", "bridges_initial_open", "switches"):
-        if key in data: out[key] = data[key]
-    return out
+    return [to_gui_level(e) for e in gui_entries()]
 
 
 def solve_level(index, algorithm):
-    levels = load_gui_levels()
-    if not isinstance(index, int) or index < 0 or index >= len(levels):
-        raise ValueError("level_index khÃ´ng há»£p lá»‡")
+    entries = gui_entries()
+    if not isinstance(index, int) or index < 0 or index >= len(entries):
+        raise ValueError("level_index không hợp lệ")
     if algorithm not in SOLVERS:
-        raise ValueError("algorithm pháº£i lÃ  bfs, dfs, ids hoáº·c ucs")
-    engine_data = to_engine_level(levels[index])
-    # Engine's public constructor accepts a JSON path; use a temporary file so the
-    # adapter does not mutate the user's original level JSON.
-    with tempfile.NamedTemporaryFile("w", encoding="utf-8", suffix=".json", delete=False) as f:
-        json.dump(engine_data, f)
-        temp_path = f.name
-    try:
-        problem = Engine(temp_path)
-        outcome = SOLVERS[algorithm](problem)
-        return {"ok": True, "level": levels[index].get("name", f"Level {index + 1}"),
-                "algorithm": algorithm, "path": outcome.path, "cost": outcome.cost,
-                "expanded": outcome.expanded, "solvable": outcome.path is not None}
-    finally:
-        Path(temp_path).unlink(missing_ok=True)
+        raise ValueError("algorithm phải là một trong: " + ", ".join(SOLVERS))
+    entry = entries[index]
+    outcome = SOLVERS[algorithm](Engine(entry["data"]))
+    return {"ok": True, "level": entry["data"]["name"], "algorithm": algorithm,
+            "path": outcome.path, "cost": outcome.cost,
+            "expanded": outcome.expanded, "solvable": outcome.path is not None}
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -86,15 +62,14 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         if urlparse(self.path).path != "/api/solve":
-            self._json(404, {"ok": False, "error": "Endpoint khÃ´ng tá»“n táº¡i"})
+            self._json(404, {"ok": False, "error": "Endpoint không tồn tại"})
             return
         try:
             size = int(self.headers.get("Content-Length", "0"))
             if size <= 0 or size > 100_000:
-                raise ValueError("Request body khÃ´ng há»£p lá»‡")
+                raise ValueError("Request body không hợp lệ")
             payload = json.loads(self.rfile.read(size).decode("utf-8"))
-            result = solve_level(payload.get("level_index"), payload.get("algorithm", "bfs"))
-            self._json(200, result)
+            self._json(200, solve_level(payload.get("level_index"), payload.get("algorithm", "bfs")))
         except (ValueError, TypeError, KeyError, json.JSONDecodeError) as exc:
             self._json(400, {"ok": False, "error": str(exc)})
         except Exception as exc:
@@ -113,12 +88,12 @@ def main():
         except OSError:
             port += 1
     url = f"http://127.0.0.1:{port}"
-    print(f"Bloxorz 3D Ä‘ang cháº¡y táº¡i {url}  (Ctrl+C Ä‘á»ƒ táº¯t)")
+    print(f"Bloxorz 3D đang chạy tại {url}  (Ctrl+C để tắt)")
     threading.Timer(0.6, lambda: webbrowser.open(url)).start()
     try:
         srv.serve_forever()
     except KeyboardInterrupt:
-        print("\nBye â™¡")
+        print("\nTạm biệt!")
 
 
 if __name__ == "__main__":
