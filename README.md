@@ -1,7 +1,7 @@
 # Bloxorz-Solver
 
 Dự án AI cơ bản: mô hình hóa trò chơi Bloxorz thành bài toán tìm kiếm, cài đặt các thuật toán
-BFS, DFS, IDS, UCS để giải, và có giao diện web 3D để chơi tay hoặc xem solver giải.
+BFS, DFS, IDS, UCS, A* để giải, và có giao diện web 3D để chơi tay hoặc xem solver giải.
 
 ## Yêu cầu
 
@@ -57,7 +57,8 @@ def my_cost(state, action, next_state):
 problem = Engine("levels/<ten-level>.json", cost_fn=my_cost)
 ```
 
-Chỉ UCS (và A* sau này) dùng cost; BFS, DFS, IDS bỏ qua cost. Cost phải lớn hơn 0.
+Chỉ UCS và A* dùng cost; BFS, DFS, IDS bỏ qua cost. Cost phải lớn hơn 0.
+Hàm cost đề xuất (engine/costs.py, bật bằng python run_experiments.py --cost weighted) và A* dùng heuristic Manhattan có xét teleport.
 
 ## Định dạng màn chơi (MỘT định dạng cho engine, solver, GUI và thí nghiệm)
 

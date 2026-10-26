@@ -13,6 +13,7 @@ import argparse
 import importlib
 
 from engine.catalog import GROUPS, LEVEL_DIR, load_catalog
+from engine.costs import COST_FUNCTIONS
 from metrics import format_table, results_to_csv, run_solver
 from solvers import SOLVERS
 
@@ -29,6 +30,8 @@ def main():
     ap.add_argument("--group", nargs="+", choices=GROUPS, help="chỉ chạy các nhóm này")
     ap.add_argument("--all", action="store_true", help="chạy cả màn không thuộc bộ benchmark")
     ap.add_argument("--solvers", nargs="+", default=list(SOLVERS), choices=list(SOLVERS))
+    ap.add_argument("--cost", default="uniform", choices=list(COST_FUNCTIONS),
+                help="hàm cost của engine: uniform (mọi nước 1.0) hoặc weighted (đổi tư thế tốn 2.0)")
     ap.add_argument("--out", default="results.csv")
     ap.add_argument("--repeat", type=int, default=3, help="số lần chạy để lấy thời gian trung vị (mặc định 3)")
     ap.add_argument("--no-memory", action="store_true", help="bỏ qua lượt đo bộ nhớ (nhanh hơn)")
@@ -42,7 +45,7 @@ def main():
     results = []
     for entry in entries:
         data = entry["data"]
-        problem = Engine(str(entry["path"]))
+        problem = Engine(str(entry["path"]), cost_fn=COST_FUNCTIONS[args.cost])        
         print(f"[{data['group']}] {entry['id']} ...", flush=True)
         for name in args.solvers:
             r = run_solver(SOLVERS[name], problem, entry["id"], measure_memory=not args.no_memory,
