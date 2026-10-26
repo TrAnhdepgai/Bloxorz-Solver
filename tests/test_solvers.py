@@ -6,7 +6,8 @@ import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from fake_engine import TRANSITIONS, Engine, State  # noqa: E402
+from engine.engine import TRANSITIONS, Engine  # noqa: E402
+from engine.state import State  # noqa: E402
 from solvers import bfs, dfs, ids, ucs  # noqa: E402
 from solvers.base import replay_path  # noqa: E402
 
@@ -48,16 +49,14 @@ def test_unsolvable_returns_none(solver, path):
 
 
 def test_ucs_prefers_cheaper_path():
-    """UCS phải theo cost, không theo số bước: giả lập chi phí 'L' đắt thì tránh đi trái."""
-    import fake_engine
-    old = dict(fake_engine.COST)
-    try:
-        fake_engine.COST.update({"L": 10.0})
-        problem = Engine(SOLVABLE[0])
-        out = ucs(problem)
-        assert out.cost == pytest.approx(sum(fake_engine.COST[a] for a in out.path))
-    finally:
-        fake_engine.COST.update(old)
+    """UCS phải theo cost, không theo số bước: dùng hook cost_fn làm hành động 'L' đắt."""
+    def costly_left(state, action, next_state):
+        return 10.0 if action == "L" else 1.0
+
+    problem = Engine(SOLVABLE[0], cost_fn=costly_left)
+    out = ucs(problem)
+    assert out.path is not None
+    assert out.cost == pytest.approx(sum(10.0 if a == "L" else 1.0 for a in out.path))
 
 
 def test_transition_table_matches_contract():
@@ -66,8 +65,8 @@ def test_transition_table_matches_contract():
         ("H", "U"): ("H", -1, 0), ("H", "D"): ("H", 1, 0), ("H", "L"): ("S", 0, -1), ("H", "R"): ("S", 0, 2),
         ("V", "U"): ("S", -1, 0), ("V", "D"): ("S", 2, 0), ("V", "L"): ("V", 0, -1), ("V", "R"): ("V", 0, 1),
     }
-    for (o, a), val in expected.items():
-        assert TRANSITIONS[o][a] == val
+    for key, val in expected.items():
+        assert TRANSITIONS[key] == val
 
 
 def test_state_hashable_and_bridges_matter():
