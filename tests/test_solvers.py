@@ -60,15 +60,14 @@ def test_unsolvable_returns_none(solver, path):
 
 
 def test_ucs_prefers_cheaper_path():
-    """UCS phải theo cost, không theo số bước: giả lập chi phí 'L' đắt thì tránh đi trái."""
-    old = dict(engine_module.COST)
-    try:
-        engine_module.COST.update({"L": 10.0})
-        problem = Engine(SOLVABLE[0])
-        out = ucs(problem)
-        assert out.cost == pytest.approx(sum(engine_module.COST[a] for a in out.path))
-    finally:
-        engine_module.COST.update(old)
+    """UCS phải theo cost, không theo số bước: dùng hook cost_fn làm hành động 'L' đắt."""
+    def costly_left(state, action, next_state):
+        return 10.0 if action == "L" else 1.0
+
+    problem = Engine(SOLVABLE[0], cost_fn=costly_left)
+    out = ucs(problem)
+    assert out.path is not None
+    assert out.cost == pytest.approx(sum(10.0 if a == "L" else 1.0 for a in out.path))
 
 
 def test_state_hashable_and_bridges_matter():

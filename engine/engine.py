@@ -15,6 +15,11 @@ TRANSITIONS = {
 ACTIONS = ('U', 'D', 'L', 'R')          # thứ tự cố định
 COST = {'U': 1.0, 'D': 1.0, 'L': 1.0, 'R': 1.0, 'SWAP': 1.0}  # chỗ cấu hình duy nhất
 
+
+def default_cost(state, action, next_state):
+    """Hook mặc định: cost chỉ phụ thuộc hành động."""
+    return COST[action]
+
 # Khi split: khối lập phương nhỏ di chuyển 1 ô theo hướng
 CUBE_DELTA = {'U': (-1, 0), 'D': (1, 0), 'L': (0, -1), 'R': (0, 1)}
 
@@ -26,8 +31,12 @@ def cells(orient, r, c):
 
 
 class Engine:
-    def __init__(self, level):
-        """`level` có thể là đường dẫn file JSON, dict đã đọc từ JSON, hoặc đối tượng Level."""
+    def __init__(self, level, cost_fn=default_cost):
+        """`level` có thể là đường dẫn file JSON, dict đã đọc từ JSON, hoặc đối tượng Level.
+
+        `cost_fn(state, action, next_state) -> float` là hook tính step_cost (mặc định: tra bảng COST).
+        """
+        self.step_cost = cost_fn
         if isinstance(level, (str, os.PathLike)):
             lv = load_level(level)
         elif isinstance(level, dict):
@@ -128,9 +137,10 @@ class Engine:
             # công tắc có thể đóng cầu dưới chân một trong hai khối -> rơi
             if not all(self._cell_ok(cr, cc, bridges) for cr, cc in cubes):
                 continue
-            result.append((a, self._merge_or_split(tuple(cubes), sp.active, bridges), COST[a]))
+            nxt = self._merge_or_split(tuple(cubes), sp.active, bridges)
+            result.append((a, nxt, self.step_cost(state, a, nxt)))
         swapped = State('S', 0, 0, state.bridges, SplitState(sp.cubes, 1 - sp.active))
-        result.append(('SWAP', swapped, COST['SWAP']))
+        result.append(('SWAP', swapped, self.step_cost(state, 'SWAP', swapped)))
         return result
 
     # ---------- interface chính (xem ENGINE_CONTRACT.md) ----------
@@ -157,5 +167,5 @@ class Engine:
                     continue
             elif not all(self._cell_ok(cr, cc, nxt.bridges) for cr, cc in nxt.split.cubes):
                 continue
-            result.append((a, nxt, COST[a]))
+            result.append((a, nxt, self.step_cost(state, a, nxt)))
         return result
