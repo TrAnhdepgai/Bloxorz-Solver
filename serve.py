@@ -6,7 +6,8 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
 
-from engine.catalog import load_catalog, to_gui_level
+from engine.catalog import GROUPS, load_catalog, to_gui_level
+from engine.costs import COST_FUNCTIONS
 from engine.engine import ACTIONS, TRANSITIONS, Engine
 from engine.state import SplitState, State
 from metrics import run_solver
@@ -15,8 +16,8 @@ from solvers import SOLVERS
 ROOT = Path(__file__).resolve().parent
 
 
-# Renderer 3D hiện chỉ vẽ và mô phỏng ô sàn thường. Thêm nhóm vào đây ("fragile", "switch", "combined") khi GUI đã hỗ trợ cơ chế tương ứng, để người chơi không gặp màn không thể chơi tay.
-GUI_GROUPS = {"basic"}
+# GUI đã vẽ và mô phỏng đủ cơ chế (ô giòn, cầu, công tắc, split) qua /api/step nên hiển thị cả 4 nhóm.
+GUI_GROUPS = set(GROUPS)
 
 
 def gui_entries():
@@ -27,13 +28,16 @@ def load_gui_levels():
     return [to_gui_level(e) for e in gui_entries()]
 
 
-def make_problem(index):
-    """Dựng Engine cho màn thứ `index` trong danh sách GUI. Trả về (problem, tên màn)."""
+def make_problem(index, cost="uniform"):
+    """Dựng Engine cho màn thứ `index` trong danh sách GUI. Trả về (problem, tên màn).
+    `cost`: "uniform" (mọi nước 1.0) hoặc "weighted" (đổi tư thế tốn 2.0) — xem engine/costs.py."""
+    if cost not in COST_FUNCTIONS:
+        raise ValueError("cost phải là " + ", ".join(COST_FUNCTIONS))
     entries = gui_entries()
     if not isinstance(index, int) or index < 0 or index >= len(entries):
         raise ValueError("level_index không hợp lệ")
     entry = entries[index]
-    return Engine(entry["data"]), entry["data"]["name"]
+    return Engine(entry["data"], cost_fn=COST_FUNCTIONS[cost]), entry["data"]["name"]
 
 
 # ---------- serialize / deserialize State cho API ----------
@@ -131,12 +135,12 @@ def step_level(index, state_data, action):
     return result
 
 
-def solve_level(index, algorithm):
-    problem, name = make_problem(index)
+def solve_level(index, algorithm, cost="uniform"):
+    problem, name = make_problem(index, cost)
     if algorithm not in SOLVERS:
         raise ValueError("algorithm phải là " + ", ".join(SOLVERS))
     r = run_solver(SOLVERS[algorithm], problem, name)
-    return {"ok": True, "level": name, "algorithm": algorithm,
+    return {"ok": True, "level": name, "algorithm": algorithm, "cost_mode": cost,
             "solvable": r.found, "path": r.path, "cost": r.cost,
             "length": r.length, "expanded": r.expanded,
             "time_ms": round(r.time_s * 1000, 3),
@@ -145,7 +149,7 @@ def solve_level(index, algorithm):
 
 # endpoint POST -> hàm xử lý nhận payload (dict) và trả về dict
 ROUTES = {
-    "/api/solve": lambda p: solve_level(p.get("level_index"), p.get("algorithm", "bfs")),
+    "/api/solve": lambda p: solve_level(p.get("level_index"), p.get("algorithm", "bfs"), p.get("cost", "uniform")),
     "/api/step": lambda p: step_level(p.get("level_index"), p.get("state"), p.get("action")),
 }
 

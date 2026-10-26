@@ -92,8 +92,7 @@ Mỗi màn là một file JSON trong `levels/`, tên file `<nhóm>_<số>_<tên>
 | còn lại         | xem `engine/level.py` (kiểm tra hợp lệ ngay khi nạp)                        |
 
 Màn hình web đọc cùng file này qua `/api/levels` (`engine/catalog.py: to_gui_level` đổi `#` → `O`
-và đánh dấu `S`/`G`). Hiện GUI chỉ nạp nhóm `basic` — thêm nhóm vào `GUI_GROUPS` trong `serve.py`
-khi renderer đã vẽ và mô phỏng được ô giòn / cầu / công tắc.
+và đánh dấu `S`/`G`). GUI nạp cả 4 nhóm (`GUI_GROUPS` trong `serve.py`) và dùng `/api/step` làm nguồn luật.
 
 ## Thêm hoặc sửa một màn
 
@@ -154,10 +153,10 @@ Tất cả endpoint POST nhận và trả JSON. Lỗi trả về `{"ok": false, 
 **`POST /api/solve`**
 
 ```json
-{"level_index": 0, "algorithm": "bfs"}
+{"level_index": 0, "algorithm": "bfs", "cost": "uniform"}
 ```
 
-Trả về: `solvable`, `path`, `cost`, `length`, `expanded`, `time_ms`, `memory_kb`.
+`cost` (tuỳ chọn): `uniform` | `weighted` (chỉ UCS và A* dùng). Trả về: `solvable`, `path`, `cost`, `length`, `expanded`, `time_ms`, `memory_kb`.
 
 **`POST /api/step`**
 

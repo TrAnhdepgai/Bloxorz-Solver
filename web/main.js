@@ -21,7 +21,7 @@ function makeLevel(d) {
   const tile = (r, c) => (g[r] && g[r][c]) || ".";
   return {
     ...d, rows: g.length, cols: Math.max(...g.map((x) => x.length)), start, goal, tile,
-    walk: (r, c) => "OSG".includes(tile(r, c))
+    walk: (r, c) => "OSG".includes(tile(r, c)) || (bridgeAt.has(r + "," + c) && bridgeOpen.has(bridgeAt.get(r + "," + c)))
   };
 }
 
@@ -124,6 +124,41 @@ function decalTex(kind, col) {
     g.strokeStyle = g.fillStyle = col; g.lineWidth = 11;
     for (const [tx, ty] of [[-27, -14], [0, -28], [27, -14]]) { g.beginPath(); g.moveTo(0, 14); g.lineTo(tx, ty); g.stroke(); }
     g.beginPath(); g.arc(0, 18, 9, 0, 7); g.fill();
+  } else if (kind === "crack") {                           // vết nứt phân nhánh, có bóng và mảnh sứt
+    // Lớp bóng lệch nhẹ làm vết nứt có chiều sâu trên mặt ô cam.
+    const branches = [
+      [[-50,-42],[-27,-25],[-14,-5],[-22,15],[-2,31],[10,49]],
+      [[-14,-5],[7,-14],[18,-34],[34,-43]],
+      [[-22,15],[-42,24],[-48,43]],
+      [[-2,31],[20,25],[35,9],[49,5]],
+      [[7,-14],[1,-34],[-5,-48]],
+      [[20,25],[25,43]]
+    ];
+    g.strokeStyle = "rgba(104,48,20,.48)"; g.lineWidth = 10;
+    for (const pts of branches) { g.beginPath(); pts.forEach(([x,y],i)=>(i?g.lineTo(x,y):g.moveTo(x,y))); g.stroke(); }
+    g.strokeStyle = col; g.lineWidth = 5;
+    for (const pts of branches) { g.beginPath(); pts.forEach(([x,y],i)=>(i?g.lineTo(x,y):g.moveTo(x,y))); g.stroke(); }
+    // Những vết rạn nhỏ phụ và mảnh cạnh bị mẻ khiến tile trông giòn hơn.
+    g.strokeStyle = "rgba(255,239,205,.9)"; g.lineWidth = 2.5;
+    for (const pts of [[[-27,-25],[-39,-15]],[[18,-34],[29,-23]],[[-42,24],[-30,37]],[[35,9],[44,20]],[[1,-34],[13,-42]]]) {
+      g.beginPath(); pts.forEach(([x,y],i)=>(i?g.lineTo(x,y):g.moveTo(x,y))); g.stroke();
+    }
+    g.fillStyle = "rgba(120,55,25,.55)";
+    for (const [x,y,rot] of [[-49,-47,-.2],[48,-35,.3],[-47,47,.5],[47,42,-.4]]) {
+      g.save(); g.translate(x,y); g.rotate(rot); g.beginPath(); g.moveTo(-5,-3); g.lineTo(4,-5); g.lineTo(5,4); g.closePath(); g.fill(); g.restore();
+    }
+  } else if (kind === "soft") {                            // nút nhẹ: vòng tròn + chấm
+    g.strokeStyle = g.fillStyle = col; g.lineWidth = 10;
+    g.beginPath(); g.arc(0, 0, 36, 0, 7); g.stroke(); g.beginPath(); g.arc(0, 0, 15, 0, 7); g.fill();
+  } else if (kind === "heavy") {                           // nút nặng: ô vuông + dấu X
+    g.strokeStyle = col; g.lineWidth = 10; g.strokeRect(-36, -36, 72, 72);
+    g.lineWidth = 11; g.beginPath(); g.moveTo(-19, -19); g.lineTo(19, 19); g.moveTo(19, -19); g.lineTo(-19, 19); g.stroke();
+  } else if (kind === "split") {                           // nút tách khối: hình thoi
+    g.strokeStyle = g.fillStyle = col; g.lineWidth = 10;
+    g.beginPath(); g.moveTo(0, -40); g.lineTo(40, 0); g.lineTo(0, 40); g.lineTo(-40, 0); g.closePath(); g.stroke();
+    g.beginPath(); g.arc(0, 0, 11, 0, 7); g.fill();
+  } else if (kind === "tele") {                            // điểm hạ cánh của khối tách
+    g.strokeStyle = col; g.lineWidth = 8; g.beginPath(); g.arc(0, 0, 38, 0, 7); g.stroke(); g.beginPath(); g.arc(0, 0, 21, 0, 7); g.stroke();
   } else {                                                 // hoa cúc: 8 cánh trắng, nhụy cam
     for (let i = 0; i < 8; i++) {
       g.save(); g.rotate((i * Math.PI) / 4); g.beginPath(); g.ellipse(0, -27, 12, 21, 0, 0, 7);
@@ -145,7 +180,7 @@ function hash2(r, c, sd) {
   h = Math.imul(h ^ (h >>> 13), 1274126177);
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
 }
-function makeTile(r, c, ch) {
+function makeTile(r, c, ch, plain) {
   const m = new THREE.Mesh(tileGeo, M.a); m.receiveShadow = true;
   const add = (geo, mt, y) => { const o = new THREE.Mesh(geo, mt); o.position.y = y; m.add(o); return o; };
   if (ch === "G") {                                        // ô đích: viền vàng, lõi xanh, hố kính bóng
@@ -156,15 +191,57 @@ function makeTile(r, c, ch) {
   }
   const sd = idx * 7 + 3, h = hash2(r, c, sd), h2 = hash2(r, c, sd + 11);
   let type = h < 0.50 ? "mint" : h < 0.77 ? "light" : h < 0.89 ? "yellow" : "coral";
-  if (ch === "S") type = "light";                          // ô xuất phát luôn là ô kem cho dễ thấy
+  if (ch === "S" || plain) type = "light";                          // ô xuất phát luôn là ô kem cho dễ thấy
   let y = .004, deco = null;
   if (type === "mint") { m.material = M.a; deco = h2 < .30 ? ["grass", "rgba(70,184,138,.9)"] : h2 < .50 ? ["paw", "rgba(70,184,138,.9)"] : null; }
   else if (type === "light") { m.material = M.b; add(insetGeo, M.light, 0); y = .016;
     deco = h2 < .45 ? ["daisy", ""] : h2 < .70 ? ["paw", "rgba(110,200,164,.95)"] : null; }
   else if (type === "yellow") { m.material = M.yellow; deco = h2 < .45 ? ["paw", "rgba(240,184,48,.95)"] : null; }
   else m.material = M.peach;
-  if (deco) add(decalGeo, decalMat(deco[0], deco[1]), y);
+  if (deco && !plain) add(decalGeo, decalMat(deco[0], deco[1]), y);
   return m;
+}
+/* ---- ô đặc biệt: ô giòn, cầu, nút ---- */
+M.frag = mat(0xFFB36B);
+M.switchBase = mat(0x101116);
+M.switchInset = mat(0x252832);
+const BR_COLORS = [0x7EC8F0, 0xC8A2F0, 0xF59EC6, 0xF5C26B];
+const brMats = BR_COLORS.map((c) => [mat(c), mat(new THREE.Color(c).lerp(new THREE.Color(0xffffff), .55))]);
+const swGeo = new THREE.PlaneGeometry(.68, .68).rotateX(-Math.PI / 2);
+function makeFragile() {
+  const m = new THREE.Mesh(tileGeo, M.frag); m.receiveShadow = true; m.castShadow = true;
+  // Mạng rạn đậm + đường sáng mảnh và các mẻ cạnh được vẽ trong decal để nhìn rõ từ góc camera.
+  const d = new THREE.Mesh(decalGeo, decalMat("crack", "rgba(126,55,24,.95)"));
+  d.position.y = .009; d.scale.set(1.06, 1, 1.06); d.renderOrder = 2; m.add(d);
+  const warning = new THREE.Mesh(new THREE.PlaneGeometry(.38,.055).rotateX(-Math.PI/2), new THREE.MeshBasicMaterial({color:0xFFE1B3, transparent:true, opacity:.78, depthWrite:false}));
+  warning.position.set(0,.010,0); warning.rotation.y = -.48; m.add(warning);
+  m.userData.fragileVisual = true;
+  return m;
+}
+function makeSwitchTile() {
+  const m = new THREE.Mesh(tileGeo, M.switchBase); m.receiveShadow = true; m.castShadow = true;
+  // Viền tối hơn một chút giúp ô đen vẫn có biên rõ trên nền.
+  const rim = new THREE.Mesh(insetGeo, M.switchInset); rim.position.y = .004; m.add(rim);
+  return m;
+}
+function makeBridge(k) {
+  const m = new THREE.Mesh(tileGeo, brMats[k % 4][0]); m.receiveShadow = true;
+  const i = new THREE.Mesh(insetGeo, brMats[k % 4][1]); i.position.y = .006; m.add(i);
+  return m;
+}
+function addSwitchDecal(m, kind, col) {
+  const switchColors = { soft: 0x55D6A6, heavy: 0xFF625D, split: 0xA879E8, tele: 0xF4A93A };
+  const color = switchColors[kind] ?? 0xF4A93A;
+  const radius = .235, baseY = .035;
+  const dome = new THREE.Mesh(
+    new THREE.SphereGeometry(radius, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2),
+    new THREE.MeshStandardMaterial({color, roughness:.24, metalness:.04, emissive:color, emissiveIntensity:.12})
+  );
+  dome.position.set(0,baseY,0); dome.castShadow = true; dome.receiveShadow = true; m.add(dome);
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(radius*.94,.025,8,32), new THREE.MeshStandardMaterial({color:0xFFFDF4, roughness:.3}));
+  rim.rotation.x = Math.PI/2; rim.position.y = baseY+.008; rim.castShadow = true; m.add(rim);
+  // Ký hiệu cũ được giữ lại nhưng thu nhỏ quanh chân nút.
+  const d = new THREE.Mesh(swGeo, decalMat(kind, col)); d.position.y = .012; d.scale.set(.78,1,.78); d.renderOrder = 1; m.add(d);
 }
 
 /* bóng mềm của từng tile rơi xuống "đám mây" bên dưới: chồng lên nhau thành một vệt bóng liền */
@@ -286,15 +363,80 @@ heart.scale.set(0.95, 0.95, 1);
 scene.add(heart);
 const world = new THREE.Group();
 scene.add(world);
+/* hai khối lập phương nhỏ khi tách đôi: vàng (0) và hồng (1); khối đang điều khiển có vòng sáng + phát sáng */
+const cubeGeo = slab(.86, .86, .86, .2, .05);
+const ringCubeGeo = new THREE.RingGeometry(.54, .64, 32).rotateX(-Math.PI / 2);
+const cubes = [0, 1].map((i) => {
+  const m = new THREE.MeshStandardMaterial({ color: i ? 0xFFB7B2 : 0xFFE082, emissive: i ? 0xFF8A80 : 0xFFC107, emissiveIntensity: .1, roughness: .35 });
+  const g = new THREE.Group(), b = new THREE.Mesh(cubeGeo, m); b.castShadow = true; g.add(b);
+  const ring = new THREE.Mesh(ringCubeGeo, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .95, side: THREE.DoubleSide }));
+  ring.position.y = -.46; g.add(ring);
+  g.userData = { mat: m, ring }; g.visible = false; scene.add(g); return g;
+});
+function setCubes(sp) {
+  cubes.forEach((g, i) => {
+    g.visible = !!sp;
+    if (sp) { g.position.set(sp.cubes[i][1], .48, sp.cubes[i][0]); g.rotation.set(0, 0, 0); g.scale.set(1, 1, 1);
+      g.userData.ring.visible = i === sp.active; g.userData.mat.emissiveIntensity = i === sp.active ? .45 : .05; }
+  });
+}
+/* áp trạng thái do engine trả về (nguồn luật duy nhất) lên cảnh 3D */
+function applyEngineState(st, fx) {
+  const nb = new Set(st.bridges), wasSplit = splitMode;
+  const changed = [...nb].filter((b) => !bridgeOpen.has(b)).concat([...bridgeOpen].filter((b) => !nb.has(b)));
+  bridgeOpen = nb; es = st;
+  for (const t of tileAt.values()) if (t.userData.bridge) t.userData.openT = nb.has(t.userData.bridge) ? 1 : 0;
+  if (fx) for (const b of changed) for (const [r, c] of level.bridges[b]) burstWorld(c, .6, r, 10);
+  splitMode = !!st.split;
+  if (splitMode !== wasSplit) playEffectSound("split");
+  $("swap").hidden = !splitMode;
+  if (splitMode) {
+    blk.visible = false; setCubes(st.split);
+    if (!wasSplit) { cubePop = 0.0001; cubes.forEach((g) => g.scale.setScalar(.001)); if (fx) st.split.cubes.forEach(([r, c]) => burstWorld(c, .8, r, 24)); }
+  } else {
+    setCubes(null); blk.visible = true; state = [st.row, st.col, st.orient]; placeBlock(state);
+    if (wasSplit) { pressCells(state); sq.a = .2; sq.v = 0; if (fx) burstWorld(st.col + (st.orient === "H" ? .5 : 0), .8, st.row + (st.orient === "V" ? .5 : 0), 24); }
+  }
+}
 
 /* ---------- trạng thái ---------- */
 let levels = [], idx = 0, level, state, moves = 0;
+let es = null, splitMode = false, bridgeOpen = new Set(), loadSeq = 0, hop = null, cubeFall = null, cubePop = 1, rollDur = 0.22, playMs = 300;
+const bridgeAt = new Map(), fragSet = new Set();
 let status = "intro", introT = 0, anim = null, fallT = 0, fallY = 0, winT = 0, winY = 0;
 const tiles = [];
 let fall = null;
 const tileAt = new Map(), pressed = new Map();   // ô sàn theo "r,c"; các ô đang bị khối đè (giá trị = độ lún)
 const sq = { a: 0, v: 0 };                          // lò xo squishy của khối
 const $ = (id) => document.getElementById(id);
+
+const bgTracks = ["./audio/cute.mp3", "./audio/menu.mp3"];
+const bgMusic = new Audio(bgTracks[Math.floor(Math.random() * bgTracks.length)]);
+bgMusic.loop = true;
+bgMusic.volume = 0.35;
+let bgMusicStarted = false;
+function startBgMusic() {
+  if (save.settings.muteMusic || (bgMusicStarted && !bgMusic.paused)) return;
+  bgMusicStarted = true;
+  bgMusic.play().catch(() => { bgMusicStarted = false; });
+}
+document.addEventListener("pointerdown", startBgMusic);
+document.addEventListener("keydown", startBgMusic);
+
+const effectSounds = {
+  loose: new Audio("./audio/loose.mp3"),
+  broke: new Audio("./audio/broke-tiles.mp3"),
+  win: new Audio("./audio/win.mp3"),
+  split: new Audio("./audio/split.mp3")
+};
+Object.values(effectSounds).forEach((sound) => { sound.preload = "auto"; sound.volume = 0.8; });
+function playEffectSound(kind) {
+  if (save.settings.muteSounds) return;
+  const sound = effectSounds[kind];
+  sound.pause();
+  sound.currentTime = 0;
+  sound.play().catch(() => {});
+}
 
 function placeBlock(s) {
   const [r, c, o] = s;
@@ -376,7 +518,8 @@ $("resultMenu").addEventListener("click", () => {
 function hud() {
   const st = save.settings;
   $("title").textContent = level.name;
-  $("info").textContent = `Màn ${idx + 1}/${levels.length} · ${moves} nước đi` + (st.optimal ? ` · tối ưu ${level.optimal_moves ?? "?"}` : "");
+  $("info").textContent = `Màn ${idx + 1}/${levels.length} · ${moves} nước đi` + (st.optimal ? ` · tối ưu ${level.optimal_moves ?? "?"}` : "") +
+    (splitMode && es?.split ? ` · đang điều khiển khối ${es.split.active ? "hồng" : "vàng"}` : "");
   const last = idx === levels.length - 1;
   $("msg").textContent = status === "fell" ? "Oops, rớt rồi… thử lại nha ♡"
     : status === "won" ? `Hoàn thành trong ${moves} nước · chọn chơi lại hoặc đi tiếp nhé ♡`
@@ -384,6 +527,7 @@ function hud() {
 }
 
 function loadLevel(i) {
+  loadSeq++; hop = null; cubeFall = null; cubePop = 1;
   stopSolverPlayback();
   // Reset all per-level completion state so the previous win cannot leak into the next level.
   resultShown = false;
@@ -394,20 +538,45 @@ function loadLevel(i) {
   if (!inMenu) { save.progress = idx; save.maxLevel = Math.max(save.maxLevel, idx); persist(); }
   world.clear(); tiles.length = 0; tileAt.clear(); pressed.clear(); sq.a = sq.v = 0;
   if (fall) { scene.remove(fall.pivot); fall = null; }
-  level.grid.forEach((row, r) => [...row].forEach((ch, c) => {
-    if (ch === ".") return;
-
-    const m = makeTile(r, c, ch);
-    m.userData = { x: c, z: r, delay: (r + c) * 0.04, dy: 0, vy: 0 };
-    tileAt.set(r + "," + c, m);
-    m.position.set(c, 5, r);
-    world.add(m); tiles.push(m);
+  bridgeAt.clear(); fragSet.clear();
+  const brIds = Object.keys(level.bridges || {}).sort();
+  brIds.forEach((id) => level.bridges[id].forEach(([r, c]) => bridgeAt.set(r + "," + c, id)));
+  (level.fragile || []).forEach(([r, c]) => fragSet.add(r + "," + c));
+  bridgeOpen = new Set(level.bridges_initial_open || []);
+  const swAt = new Map(), teleAt = new Set();
+  (level.switches || []).forEach((sw) => {
+    swAt.set(sw.pos[0] + "," + sw.pos[1], sw);
+    (sw.teleport || []).forEach(([r, c]) => teleAt.add(r + "," + c));
+  });
+  const addShadow = (r, c) => {
     const sh = new THREE.Mesh(shadowGeo, shadowMat);        // bóng rơi xuống mây
     sh.position.set(c - 0.2, -1.1, r + 0.32); sh.renderOrder = -1;
-    world.add(sh);
+    world.add(sh); return sh;
+  };
+  level.grid.forEach((row, r) => [...row].forEach((ch, c) => {
+    if (ch === ".") return;
+    const key = r + "," + c, sw = swAt.get(key);
+    const m = fragSet.has(key) ? makeFragile() : sw ? makeSwitchTile() : makeTile(r, c, ch, !!teleAt.has(key));
+    if (sw) {
+      const tg = sw.targets || [], col = tg.length ? new THREE.Color(BR_COLORS[brIds.indexOf(tg[0]) % 4]).multiplyScalar(.72).getStyle() : "#F4A93A";
+      addSwitchDecal(m, sw.type, col);
+    } else if (teleAt.has(key)) addSwitchDecal(m, "tele", "#F4A93A");
+    m.userData = { x: c, z: r, delay: (r + c) * 0.04, dy: 0, vy: 0 };
+    tileAt.set(key, m);
+    m.position.set(c, 5, r);
+    world.add(m); tiles.push(m); addShadow(r, c);
+  }));
+  brIds.forEach((id, k) => level.bridges[id].forEach(([r, c]) => {
+    const m = makeBridge(k), o = bridgeOpen.has(id) ? 1 : 0;
+    m.userData = { x: c, z: r, delay: (r + c) * 0.04, dy: 0, vy: 0, bridge: id, o, openT: o, sh: addShadow(r, c) };
+    m.scale.set(1, .06 + .94 * o, 1);
+    tileAt.set(r + "," + c, m); m.position.set(c, 5, r);
+    world.add(m); tiles.push(m);
   }));
 
   state = level.start; moves = 0; anim = null; introT = 0; status = "intro";
+  es = { orient: "S", row: level.start[0], col: level.start[1], bridges: [...bridgeOpen], split: null };
+  splitMode = false; setCubes(null); $("swap").hidden = true; $("stats").textContent = "";
   blk.visible = true; blk.scale.setScalar(0.001); heart.visible = true;
   scene.add(blk); placeBlock(state);
   document.documentElement.classList.remove("win");
@@ -421,7 +590,7 @@ function loadLevel(i) {
 
 /* ---------- camera ---------- */
 const center = new THREE.Vector3();
-let az = 0, azT = 0, el = 0.95, R = 12, dragging = false;
+let az = 0, azT = 0, el = 0.95, R = 12, fitR = 12, zoomFactor = 1, dragging = false;
 let solveQueue = [], solving = false, solveTimer = null;
 function fit() {
   const w = innerWidth, h = innerHeight, asp = w / h;
@@ -429,9 +598,18 @@ function fit() {
   if (!level) return;
   const v = cam.fov * Math.PI / 180, hf = 2 * Math.atan(Math.tan(v / 2) * asp);
   const rad = Math.hypot(level.cols, level.rows) / 2 + 1.6;
-  R = rad / Math.sin(Math.min(v, hf) / 2) * 0.72;
+  fitR = rad / Math.sin(Math.min(v, hf) / 2) * 0.72;
+  R = fitR * zoomFactor;
 }
 addEventListener("resize", fit);
+const changeZoom = (factor) => {
+  zoomFactor = Math.min(2.5, Math.max(0.45, zoomFactor * factor));
+  R = fitR * zoomFactor;
+};
+renderer.domElement.addEventListener("wheel", (e) => {
+  e.preventDefault();
+  changeZoom(Math.exp(e.deltaY * 0.001));
+}, { passive: false });
 renderer.domElement.addEventListener("pointerdown", (e) => { dragging = true; renderer.domElement.setPointerCapture(e.pointerId); });
 renderer.domElement.addEventListener("pointermove", (e) => {
   if (!dragging) return;
@@ -443,10 +621,51 @@ renderer.domElement.addEventListener("pointercancel", endDrag);
 const turn = (n) => { azT = Math.round(azT / (Math.PI / 2)) * (Math.PI / 2) + n * Math.PI / 2; };
 
 /* ---------- di chuyển ---------- */
-function move(dir) {
-  if (status !== "idle") return;
+const DIR_TO_ACTION = { UP: "U", DOWN: "D", LEFT: "L", RIGHT: "R" };
+async function stepApi(action) {
+  const r = await fetch("/api/step", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ level_index: idx, state: es, action }) });
+  const j = await r.json();
+  if (!r.ok || !j.ok) throw new Error(j.error || "Lỗi /api/step");
+  return j;
+}
+async function move(dir) {
+  if (status !== "idle" || !level) return;
+  if (splitMode) {                                   // bị khối kia chặn: không phải rơi, chỉ bỏ qua
+    const sp = es.split, [r, c] = sp.cubes[sp.active], [dr, dc] = DIRV[dir], o = sp.cubes[1 - sp.active];
+    if (r + dr === o[0] && c + dc === o[1]) return;
+  }
+  status = "wait"; const seq = loadSeq;
+  let resp;
+  try { resp = await stepApi(DIR_TO_ACTION[dir]); }
+  catch (e) { if (seq === loadSeq) { status = "idle"; $("msg").textContent = `Mất kết nối server: ${e.message}`; } return; }
+  if (seq !== loadSeq) return;
+  if (splitMode) startHop(dir, resp); else startRoll(dir, resp);
+}
+async function swapCube() {
+  if (status !== "idle" || !splitMode) return;
+  status = "wait"; const seq = loadSeq;
+  try {
+    const resp = await stepApi("SWAP");
+    if (seq !== loadSeq) return;
+    moves++; applyEngineState(resp.state, false); status = "idle"; hud();
+  } catch (e) { if (seq === loadSeq) status = "idle"; }
+}
+function startHop(dir, resp) {
+  const sp = es.split, a = sp.active, [r, c] = sp.cubes[a], [dr, dc] = DIRV[dir];
+  pressed.clear(); moves++;
+  hop = { g: cubes[a], x0: c, z0: r, dx: dc, dz: dr, t: 0, resp };
+  status = "rolling";
+}
+function finishHop() {
+  const { g, resp, dx, dz } = hop; hop = null;
+  if (!resp.legal) { playEffectSound("loose"); cubeFall = { g, dx, dz, x0: g.position.x, z0: g.position.z }; status = "fell"; fallT = 0; hud(); return; }
+  applyEngineState(resp.state, true);
+  status = "idle"; hud();
+}
+function startRoll(dir, resp) {
   const n = roll(state, dir);
-  const legal = cellsOf(n).every(([r, c]) => level.walk(r, c));
+  const legal = resp.legal;
   const cs = cellsOf(state);
   const rs = cs.map((p) => p[0]), cc = cs.map((p) => p[1]);
   const minR = Math.min(...rs), maxR = Math.max(...rs), minC = Math.min(...cc), maxC = Math.max(...cc);
@@ -460,7 +679,7 @@ function move(dir) {
   pressed.clear(); sq.a = sq.v = 0; blk.scale.set(1, 1, 1); placeBlock(state);
   scene.add(pivot); pivot.attach(blk);
   moves++;
-  anim = { t: 0, dur: 0.22, pivot, axis, ang, n, legal, dir };
+  anim = { t: 0, dur: rollDur, pivot, axis, ang, n, legal, dir, resp };
   status = "rolling";
 }
 const DIRV = { UP: [-1, 0], DOWN: [1, 0], LEFT: [0, -1], RIGHT: [0, 1] };   // [dr, dc]
@@ -471,12 +690,13 @@ function pressCells(st) {
     if (t) { pressed.set(r + "," + c, depth); t.userData.vy -= 1.4; }   // chạm xuống là lún một nhịp
   }
 }
-function startFall(pivot, axis, sign, base, dr, dc, alpha, maxAng) {
+function startFall(pivot, axis, sign, base, dr, dc, alpha, maxAng, sound = "loose") {
   fall = { pivot, axis, sign, base, alpha, maxAng, x0: pivot.position.x, z0: pivot.position.z, dr, dc };
+  playEffectSound(sound);
   status = "fell"; fallT = 0;
 }
 function finishRoll() {
-  const { pivot, n, legal, axis, ang, dir } = anim;
+  const { pivot, n, legal, axis, ang, dir, resp } = anim;
   anim = null; state = n;
   if (!legal) {
     const cs = cellsOf(n);
@@ -484,6 +704,11 @@ function finishRoll() {
     if (!sup.length) {
       // lăn hẳn ra ngoài mép: khối tiếp tục lật quanh mép vừa rời đi, trôi ra xa rồi rơi
       startFall(pivot, axis, Math.sign(ang), ang, ...DIRV[dir], 5, 1.0);
+    } else if (!gone.length) {
+      // đủ chỗ đứng nhưng luật không cho (ô giòn vỡ / cầu sập): khối rơi thẳng xuống, ô giòn vỡ theo
+      const breaks = n[2] === "S" ? cs.map(([r, c]) => tileAt.get(r + "," + c)).filter((t) => t && fragSet.has(t.userData.z + "," + t.userData.x)) : [];
+      breaks.forEach((t) => { t.userData.broken = true; });
+      startFall(pivot, axis, 0, ang, 0, 0, 0, 0, breaks.length ? "broke" : "loose");
     } else {
       // nằm vắt qua mép: đổ về phía ô trống, quay quanh đường biên giữa ô có sàn và ô trống
       scene.add(blk); scene.remove(pivot); placeBlock(n);
@@ -496,13 +721,16 @@ function finishRoll() {
     hud(); return;
   }
   scene.add(blk); scene.remove(pivot); placeBlock(n);
-  if (n[2] === "S" && n[0] === level.goal[0] && n[1] === level.goal[1]) {
+  applyEngineState(resp.state, true);
+  if (resp.status === "won") {
+    playEffectSound("win");
     status = "won"; winT = 0; winY = blk.position.y; heart.visible = false; document.documentElement.classList.add("win");
     const b = save.best[level.name]; if (b == null || moves < b) save.best[level.name] = moves;
     save.progress = idx; persist();
     burstWorld(level.goal[1], 1.0, level.goal[0], 70);
   } else {
-    status = "idle"; pressCells(n); sq.a = n[2] === "S" ? 0.13 : 0.2; sq.v = 0;   // đáp xuống: nén rồi nở từ từ
+    status = "idle";
+    if (!splitMode) { pressCells(n); sq.a = n[2] === "S" ? 0.13 : 0.2; sq.v = 0; }   // đáp xuống: nén rồi nở từ từ
   }
   hud();
 }
@@ -511,7 +739,7 @@ function finishRoll() {
 const ACTION_TO_DIR = { U: "UP", D: "DOWN", L: "LEFT", R: "RIGHT" };
 function stopSolverPlayback() {
   solving = false;
-  solveQueue = [];
+  solveQueue = []; rollDur = 0.22; playMs = 300;
   if (solveTimer !== null) { clearTimeout(solveTimer); solveTimer = null; }
   const button = $("solve");
   if (button) { button.disabled = false; button.textContent = `Solve · ${$("solverAlgorithm")?.value.toUpperCase() || "BFS"}`; }
@@ -519,7 +747,7 @@ function stopSolverPlayback() {
 function playNextSolverMove() {
   if (!solving) return;
   if (!solveQueue.length) {
-    solving = false;
+    solving = false; rollDur = 0.22; playMs = 300;
     $("solve").disabled = false;
     $("solve").textContent = `Solve · ${$("solverAlgorithm").value.toUpperCase()}`;
     $("msg").textContent = "Đã phát xong lời giải ♡";
@@ -534,6 +762,7 @@ function playNextSolverMove() {
     return;
   }
   const action = solveQueue.shift();
+  if (action === "SWAP") { swapCube(); solveTimer = setTimeout(playNextSolverMove, playMs); return; }
   const dir = ACTION_TO_DIR[action];
   if (!dir) {
     stopSolverPlayback();
@@ -541,11 +770,11 @@ function playNextSolverMove() {
     return;
   }
   move(dir);
-  solveTimer = setTimeout(playNextSolverMove, 300);
+  solveTimer = setTimeout(playNextSolverMove, playMs);
 }
 async function requestSolution() {
   if (solving || !level || inMenu) return;
-  if (status === "rolling" || status === "fell" || status === "won") {
+  if (status === "rolling" || status === "wait" || status === "fell" || status === "won") {
     $("msg").textContent = "Hãy chơi lại màn trước khi chạy Solve.";
     return;
   }
@@ -556,7 +785,7 @@ async function requestSolution() {
   try {
     const response = await fetch("/api/solve", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ level_index: idx, algorithm })
+      body: JSON.stringify({ level_index: idx, algorithm, cost: $("solverCost").value })
     });
     const result = await response.json();
     if (!response.ok || !result.ok) throw new Error(result.error || "Không thể giải màn này");
@@ -568,8 +797,10 @@ async function requestSolution() {
     // Restart the visual board so playback starts from the engine's initial state.
     loadLevel(idx);
     solveQueue = result.path.slice(); solving = true;
+    const fast = result.path.length > 80; rollDur = fast ? 0.11 : 0.22; playMs = fast ? 140 : 300;
     button.disabled = true; button.textContent = `Đang giải ${algorithm.toUpperCase()}…`;
-    $("msg").textContent = `BFS tìm được ${result.path.length} nước · mở rộng ${result.expanded} trạng thái.`;
+    $("msg").textContent = `${algorithm.toUpperCase()} tìm được lời giải ${result.length} nước.`;
+    $("stats").textContent = `cost ${result.cost} · mở rộng ${result.expanded} nút · ${result.time_ms} ms · ${result.memory_kb} KB`;
     playNextSolverMove();
   } catch (error) {
     button.disabled = false; button.textContent = `Solve · ${$("solverAlgorithm").value.toUpperCase()}`;
@@ -585,26 +816,36 @@ addEventListener("keydown", (e) => {
     else openMenu();
     return;
   }
+  if (resultShown && (e.key === "Enter" || e.key === "NumpadEnter")) {
+    e.preventDefault();
+    if (!e.repeat) $("resultNext").click();
+    return;
+  }
   if (inMenu || resultShown) return;
   const map = { ArrowUp: 0, ArrowRight: 1, ArrowDown: 2, ArrowLeft: 3, w: 0, d: 1, s: 2, a: 3, W: 0, D: 1, S: 2, A: 3 };
   if (e.key in map) {
     e.preventDefault();
     const k = Math.round(azT / (Math.PI / 2));
     move(LIST[(((map[e.key] - k) % 4) + 4) % 4]);
+  } else if (e.key === " " || e.key === "f" || e.key === "F") {
+    e.preventDefault(); swapCube();
   } else if (e.key === "r" || e.key === "R") loadLevel(idx);
   else if (e.key === "n" || e.key === "N" || e.key === "]") loadLevel(idx + 1);
   else if (e.key === "[") loadLevel(idx - 1);
   else if (e.key === "q" || e.key === "Q") turn(-1);
   else if (e.key === "e" || e.key === "E") turn(1);
+  else if (e.key === "+" || e.key === "=") { e.preventDefault(); changeZoom(0.85); }
+  else if (e.key === "-" || e.key === "_") { e.preventDefault(); changeZoom(1.18); }
 });
 $("menuBtn").onclick = () => openMenu();
 $("restart").onclick = () => loadLevel(idx);
+$("swap").onclick = () => swapCube();
 $("rl").onclick = () => turn(-1);
 $("rr").onclick = () => turn(1);
 
 /* ---------- lưu trữ (localStorage) + menu khởi đầu ---------- */
 const KEY = "bloxorz.v1";
-const DEF = { hint: true, optimal: true, auto: true, snow: true, fx: true };
+const DEF = { hint: true, optimal: true, auto: true, snow: true, fx: true, muteMusic: false, muteSounds: false };
 function readSave() {
   try {
     const x = JSON.parse(localStorage.getItem(KEY) || "{}");
@@ -617,7 +858,8 @@ let inMenu = true, started = false;
 
 const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 function showPanel(id) {
-  ["pMain", "pAch", "pSet"].forEach((p) => ($(p).hidden = p !== id));
+  ["pMain", "pLevels", "pAch", "pSet"].forEach((p) => ($(p).hidden = p !== id));
+  if (id === "pLevels") renderLevels();
   if (id === "pAch") renderAch();
   if (id === "pSet") renderSet();
 }
@@ -629,6 +871,27 @@ function refreshMenu() {
 }
 function openMenu() { inMenu = true; $("menu").classList.remove("off"); showPanel("pMain"); refreshMenu(); }
 function closeMenu() { inMenu = false; $("menu").classList.add("off"); azT = Math.round(az / (Math.PI / 2)) * (Math.PI / 2); }
+
+function renderLevels() {
+  const box = $("levelList"); box.replaceChildren();
+  const completed = levels.filter((l) => save.best[l.name] != null).length;
+  $("levelSum").textContent = `Đã hoàn thành ${completed}/${levels.length} màn · chọn bất kỳ màn nào để chơi lại`;
+  levels.forEach((l, i) => {
+    const best = save.best[l.name];
+    const stars = best == null ? 0 : ratingForMoves(best, Number(l.optimal_moves));
+    const card = mk("button", `level-card${best != null ? " completed" : ""}${i === idx ? " current" : ""}`);
+    card.type = "button";
+    const name = mk("span", "level-name", `${String(i + 1).padStart(2,"0")} · ${l.name}`);
+    const starLine = mk("span", "level-stars");
+    starLine.innerHTML = Array.from({length:5},(_,n)=>`<span class="${n < stars ? "earned" : ""}">${n < stars ? "★" : "☆"}</span>`).join("");
+    const stateText = mk("span", "level-state", best == null ? "Chưa hoàn thành" : `Kỷ lục: ${best} nước`);
+    card.append(name, starLine, stateText);
+    card.onclick = () => {
+      started = true; closeMenu(); loadLevel(i);
+    };
+    box.append(card);
+  });
+}
 
 function renderAch() {
   const box = $("achList"); box.replaceChildren();
@@ -643,13 +906,23 @@ function renderAch() {
   });
 }
 const SETS = [["hint", "Hiện gợi ý ở mỗi màn"], ["optimal", "Hiện số nước tối ưu"], ["auto", "Tự động qua màn khi thắng"],
-["snow", "Hiệu ứng tuyết rơi"], ["fx", "Hiệu ứng lấp lánh theo chuột"]];
+["snow", "Hiệu ứng tuyết rơi"], ["fx", "Hiệu ứng lấp lánh theo chuột"], ["muteMusic", "Tắt nhạc nền"], ["muteSounds", "Tắt âm thanh hiệu ứng"]];
 function renderSet() {
   const box = $("setList"); box.replaceChildren();
   for (const [k, label] of SETS) {
     const row = mk("label", "row"), cb = mk("input");
     cb.type = "checkbox"; cb.checked = save.settings[k];
-    cb.onchange = () => { save.settings[k] = cb.checked; persist(); applyFx(); if (level) hud(); };
+    cb.onchange = () => {
+      save.settings[k] = cb.checked;
+      persist();
+      if (k === "muteMusic") {
+        if (cb.checked) bgMusic.pause();
+        else startBgMusic();
+      }
+      if (k === "muteSounds" && cb.checked) Object.values(effectSounds).forEach((sound) => { sound.pause(); sound.currentTime = 0; });
+      applyFx();
+      if (level) hud();
+    };
     row.append(mk("span", "nm", label), cb); box.append(row);
   }
 }
@@ -669,6 +942,7 @@ $("mCont").onclick = () => {
   }
   started = true; closeMenu(); loadLevel(save.progress ?? 0);
 };
+$("mLevels").onclick = () => showPanel("pLevels");
 $("mAch").onclick = () => showPanel("pAch");
 $("mSet").onclick = () => showPanel("pSet");
 document.querySelectorAll(".back").forEach((b) => (b.onclick = () => showPanel("pMain")));
@@ -925,6 +1199,25 @@ let last = performance.now();
 function tick(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
   if (level) {
+    for (const t of tileAt.values()) {                                              // cầu trồi lên / thụt xuống
+      const u = t.userData; if (!u.bridge) continue;
+      u.o += (u.openT - u.o) * Math.min(1, dt * 9); if (Math.abs(u.openT - u.o) < .003) u.o = u.openT;
+      t.scale.set(1, .06 + .94 * u.o, 1);                                         // cầu đóng = bóng mờ mỏng, mở = ô đầy đủ
+      t.material.transparent = t.children[0].material.transparent = true;
+      t.material.opacity = t.children[0].material.opacity = .3 + .7 * u.o; u.sh.visible = u.o > .5;
+    }
+    if (hop) {
+      hop.t += dt / rollDur; const p = clamp01(hop.t), e = p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+      hop.g.position.set(hop.x0 + hop.dx * e, .48 + Math.sin(Math.PI * p) * .32, hop.z0 + hop.dz * e);
+      if (p >= 1) finishHop();
+    }
+    if (cubePop < 1) { cubePop = Math.min(1, cubePop + dt / .35); cubes.forEach((g) => g.scale.setScalar(Math.max(.001, outBack(cubePop)))); }
+    if (status === "fell" && cubeFall) {
+      fallT += dt; const f = cubeFall;
+      f.g.position.set(f.x0 + f.dx * .7 * fallT, .48 - 12 * fallT * fallT, f.z0 + f.dz * .7 * fallT);
+      f.g.rotation.set(f.dz * fallT * 2.5, 0, -f.dx * fallT * 2.5);
+      if (fallT > .9) loadLevel(idx);
+    }
     if (status === "intro") {
       introT += dt;
       for (const m of tiles) m.position.y = (1 - outCubic(clamp01((introT - m.userData.delay) / 0.5))) * 5;
@@ -947,10 +1240,15 @@ function tick(now) {
     if (status !== "intro") {                                                      // tile lún nhẹ dưới khối (lò xo)
       for (const [key, t] of tileAt) {
         const u = t.userData, target = -(pressed.get(key) || 0);
+        if (u.broken) { t.position.y = -14 * Math.max(0, fallT - 0.05) ** 2; continue; }   // ô giòn vỡ rơi theo khối
         u.vy += (-190 * (u.dy - target) - 15 * u.vy) * dt; u.dy += u.vy * dt; t.position.y = u.dy;
       }
     }
-    if (status === "idle") {                                                       // squishy: nở chậm + thở nhẹ
+    if (splitMode && status === "idle") {                                          // khối đang điều khiển nhấp nhô + vòng xoay
+      cubes.forEach((g, i) => { const on = i === es.split.active;
+        g.position.y = .48 + (on ? Math.sin(now / 260) * .04 : 0); g.userData.ring.rotation.y = now / 700; });
+    }
+    if (status === "idle" && !splitMode) {                                         // squishy: nở chậm + thở nhẹ
       sq.v += (-36 * sq.a - 9.6 * sq.v) * dt; sq.a += sq.v * dt;
       applySquish(sq.a + Math.sin(now / 650) * 0.01);
     }

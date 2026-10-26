@@ -62,3 +62,13 @@ The GUI currently exposes only the `basic` group (`GUI_GROUPS` in `serve.py`), w
 - GUI hiện vẫn tự mô phỏng nước đi bằng JS và chưa gọi `/api/step`. Khi làm bước đồng bộ UI cho fragile/bridge/switch/split, dùng `/api/step` làm nguồn đúng (engine là nguồn luật chơi duy nhất). GUI cũng chưa hiển thị `length`, `time_ms`, `memory_kb`.
 - Mọi file lưu bằng UTF-8; `serve.py` trả `charset=utf-8`.
 - Test: `python -m pytest -q` (`tests/test_solvers.py` dùng engine thật, không còn `fake_engine`).
+
+## Cập nhật: GUI đồng bộ engine (đủ 16 màn, 4 nhóm)
+
+- `GUI_GROUPS` trong `serve.py` giờ là cả 4 nhóm (`basic`, `fragile`, `switch`, `combined`) → GUI hiện 16 màn.
+- **Engine là nguồn luật duy nhất**: mỗi nước đi (`U/D/L/R/SWAP`) gọi `POST /api/step` với `state` hiện tại; JS chỉ dựng hoạt ảnh từ `legal`, `status`, `state` trả về (không còn tự mô phỏng luật trong `web/main.js`).
+- Renderer mới: ô giòn (cam, có vết nứt, vỡ rơi theo khối khi đứng lên), cầu (màu theo id, đóng = bóng mờ, mở = ô đầy đủ), nút nhẹ ◎ / nặng ▣ / tách khối ◇ (màu trùng màu cầu mục tiêu), điểm hạ cánh teleport.
+- Split: hai khối nhỏ (vàng / hồng), khối đang điều khiển có vòng sáng; `Space` hoặc nút "Đổi khối" gửi `SWAP` (tính là một nước, như `optimal_moves`); hai khối liền kề thì ghép lại thành khối nguyên.
+- Solver: thêm **A\*** vào danh sách; thêm chọn hàm cost (`uniform` / `weighted`) cho UCS và A\*. `POST /api/solve` nhận thêm `cost` (mặc định `uniform`) và trả thêm `cost_mode`. GUI hiện `cost · số nút mở rộng · thời gian · bộ nhớ` dưới tiêu đề; Solve phát được cả `SWAP`.
+- Lời giải dài (> 80 nước, ví dụ DFS) phát nhanh hơn.
+- Đã kiểm tra bằng Chromium headless: Solve (A\*) thắng 5/5 sao ở các màn đại diện (basic, fragile, switch có cầu, split + SWAP, combined); đứng lên ô giòn thì rơi và reset đúng.
