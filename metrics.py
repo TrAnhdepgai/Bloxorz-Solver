@@ -7,6 +7,7 @@ Thời gian và bộ nhớ được đo ở HAI lượt chạy riêng, vì trace
 import csv
 import gc
 import math
+import statistics
 import time
 import tracemalloc
 from dataclasses import asdict, dataclass, fields
@@ -27,17 +28,24 @@ class SolveResult:
     time_s: float
     peak_mem_kb: float           # nan nếu không đo
     path: Optional[list]
+    group: str = ""                      # nhóm màn (basic/fragile/switch/combined), do run_experiments điền
+    optimal_moves: Optional[int] = None  # số nước tối ưu lưu trong file level (BFS), để so sánh độ dài lời giải
 
 
-def run_solver(solver, problem, level="", measure_memory=True):
-    """Chạy một solver trên một problem, trả về SolveResult."""
+def run_solver(solver, problem, level="", measure_memory=True, repeats=1):
+    """Chạy một solver trên một problem, trả về SolveResult.
+
+    Thời gian = trung vị của `repeats` lần chạy (giảm nhiễu ở các màn chạy chỉ vài ms)."""
     name = solver.__name__
 
     # Lượt 1: đo thời gian (không bật tracemalloc)
-    gc.collect()
-    t0 = time.perf_counter()
-    outcome = solver(problem)
-    elapsed = time.perf_counter() - t0
+    times = []
+    for _ in range(max(1, repeats)):
+        gc.collect()
+        t0 = time.perf_counter()
+        outcome = solver(problem)
+        times.append(time.perf_counter() - t0)
+    elapsed = statistics.median(times)
 
     # Lượt 2: đo bộ nhớ đỉnh
     peak_kb = math.nan
@@ -80,12 +88,13 @@ def results_to_csv(results, filename):
 
 def format_table(results):
     """Bảng chữ để in ra terminal."""
-    header = f"{'level':<16}{'solver':<8}{'found':<7}{'valid':<7}{'len':>5}{'cost':>8}{'expanded':>10}{'time(ms)':>11}{'peak(KB)':>11}"
+    header = f"{'level':<28}{'solver':<8}{'found':<7}{'valid':<7}{'len':>5}{'opt':>5}{'cost':>8}{'expanded':>10}{'time(ms)':>11}{'peak(KB)':>11}"
     lines = [header, "-" * len(header)]
     for r in results:
         lines.append(
-            f"{r.level:<16}{r.solver:<8}{str(r.found):<7}{str(r.valid):<7}"
+            f"{r.level:<28}{r.solver:<8}{str(r.found):<7}{str(r.valid):<7}"
             f"{'-' if r.length is None else r.length:>5}"
+            f"{'-' if r.optimal_moves is None else r.optimal_moves:>5}"
             f"{'-' if r.cost is None else format(r.cost, '.1f'):>8}"
             f"{r.expanded:>10}{r.time_s * 1000:>11.2f}{r.peak_mem_kb:>11.1f}"
         )

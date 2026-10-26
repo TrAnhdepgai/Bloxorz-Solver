@@ -6,7 +6,7 @@ BFS, DFS, IDS, UCS để giải, và có giao diện web 3D để chơi tay ho�
 ## Yêu cầu
 
 - Python 3.9 trở lên
-- `pip install -r requirements.txt` (chỉ cần `pytest` để chạy test; phần còn lại dùng thư viện chuẩn)
+- `pip install -r requirements.txt` (`pytest` để chạy test, `matplotlib` để vẽ biểu đồ; server và solver chỉ dùng thư viện chuẩn)
 - Trình duyệt hỗ trợ WebGL cho giao diện 3D
 
 ## Chạy nhanh
@@ -28,8 +28,10 @@ và tự mở trình duyệt. Nhấn `Ctrl+C` để tắt.
 | `solvers/` | Các thuật toán tìm kiếm; `SOLVERS` là bảng đăng ký theo tên |
 | `metrics.py` | Đo thời gian, bộ nhớ đỉnh, số nút mở rộng, độ dài lời giải |
 | `run_experiments.py` | Chạy các solver trên `levels/`, in bảng và ghi CSV |
-| `levels/` | Level theo schema của engine, dùng cho thực nghiệm và test |
-| `gui_levels/` | Level cho giao diện web (có tên, gợi ý, độ khó...) |
+| `levels/` | Mọi màn chơi theo MỘT định dạng, dùng cho engine, solver, GUI và thực nghiệm |
+| `engine/catalog.py` | Nạp danh sách màn từ `levels/`, lọc theo nhóm / benchmark |
+| `compute_optimal.py` | Tính và ghi `optimal_moves` (BFS) cho từng màn |
+| `plot_results.py` | Vẽ biểu đồ và bảng từ `results.csv` vào `figures/` |
 | `web/` | Giao diện Three.js |
 | `tests/` | Test bằng pytest |
 
@@ -57,41 +59,82 @@ problem = Engine("levels/<ten-level>.json", cost_fn=my_cost)
 
 Chỉ UCS (và A* sau này) dùng cost; BFS, DFS, IDS bỏ qua cost. Cost phải lớn hơn 0.
 
-## Định dạng level (`levels/`)
+## Định dạng màn chơi (MỘT định dạng cho engine, solver, GUI và thí nghiệm)
+
+Mỗi màn là một file JSON trong `levels/`, tên file `<nhóm>_<số>_<tên>.json`:
 
 ```json
 {
-  "grid": ["####", "####"],
-  "start": [0, 0],
+  "name": "Stone Bridge",
+  "group": "fragile",
+  "difficulty": 8,
+  "benchmark": true,
+  "hint": "Ô cam giòn: đừng đứng lên, hãy nằm ngang qua.",
+  "optimal_moves": 15,
+  "grid": ["#####", "#...#"],
+  "start": [1, 1],
   "goal": [1, 3],
-  "fragile": [[0, 2]],
-  "bridges": {"B1": [[0, 3]]},
+  "fragile": [[1, 2]],
+  "bridges": {"B1": [[0, 6], [0, 7]]},
   "bridges_initial_open": [],
-  "switches": [{"pos": [0, 1], "type": "soft", "targets": ["B1"], "mode": "toggle"}]
+  "switches": [{"pos": [1, 3], "type": "soft", "targets": ["B1"], "mode": "toggle"}]
 }
 ```
 
-- `grid`: `#` là sàn, `.` là trống. Các hàng phải cùng độ dài.
-- `start`, `goal`: `[hàng, cột]`, phải nằm trên ô `#` và không nằm trên ô fragile.
-- Các khóa `fragile`, `bridges`, `bridges_initial_open`, `switches` là tùy chọn.
-- Switch có `type` là `soft`, `heavy` hoặc `split`; `mode` là `toggle` (mặc định) hoặc `permanent`
-  (khi đó cần `"set": "open"` hoặc `"close"`); switch `split` cần `teleport` gồm 2 toạ độ không liền kề.
+| Trường          | Ý nghĩa                                                                     |
+| --------------- | --------------------------------------------------------------------------- |
+| `grid`          | `#` = ô sàn, `.` = ô trống. Ô của cầu để là `.` và khai báo trong `bridges` |
+| `group`         | `basic`, `fragile`, `switch`, `combined`                                    |
+| `difficulty`    | thứ tự trong chiến dịch GUI                                                 |
+| `benchmark`     | `true` = thuộc bộ test cố định dùng cho báo cáo                             |
+| `optimal_moves` | **không sửa tay** — do `compute_optimal.py` ghi (SWAP tính là một nước)     |
+| còn lại         | xem `engine/level.py` (kiểm tra hợp lệ ngay khi nạp)                        |
 
-Level trong `gui_levels/` dùng ký tự `S` (xuất phát), `G` (đích), `O` (sàn), `.` (trống),
-và `serve.py` tự chuyển sang schema của engine khi cần.
+Màn hình web đọc cùng file này qua `/api/levels` (`engine/catalog.py: to_gui_level` đổi `#` → `O`
+và đánh dấu `S`/`G`). Hiện GUI chỉ nạp nhóm `basic` — thêm nhóm vào `GUI_GROUPS` trong `serve.py`
+khi renderer đã vẽ và mô phỏng được ô giòn / cầu / công tắc.
 
-## Chạy thực nghiệm
+## Thêm hoặc sửa một màn
 
-```bash
-python run_experiments.py
-python run_experiments.py --solvers bfs ucs --no-memory
-python run_experiments.py --levels levels --out results.csv
+1. Tạo/sửa file trong `levels/` (xem sơ đồ bằng `python compute_optimal.py --show <id>`).
+2. `python compute_optimal.py <id>` — BFS tính và ghi `optimal_moves`; báo lỗi nếu màn benchmark không giải được.
+3. `python -m pytest -q` — kiểm tra định dạng, 4 nhóm x 3 màn, `optimal_moves` đúng.
+4. `python compute_optimal.py --check` — dùng trước khi commit (thoát mã 1 nếu có file lệch).
+
+## Bộ test cố định (benchmark): 4 nhóm x 3 màn
+
+`python compute_optimal.py --list` in bảng đầy đủ.
+
+| Nhóm     | Nhỏ                                   | Vừa                                   | Lớn                                      |
+| -------- | ------------------------------------- | ------------------------------------- | ---------------------------------------- |
+| basic    | `basic_02_little_corner` 4x7 (7 nước) | `basic_05_garden_maze` 7x12 (12)      | `basic_07_grand_maze` 22x40 (38)         |
+| fragile  | `fragile_01_stone_bridge` 4x16 (15)   | `fragile_02_two_crossings` 14x20 (25) | `fragile_03_glass_valley` 24x34 (37)     |
+| switch   | `switch_01_soft_bridge` 3x13 (11)     | `switch_02_two_gates` 14x22 (28)      | `switch_03_twin_cubes` 11x21 (33, split) |
+| combined | `combined_01_glass_gate` 7x22 (22)    | `combined_02_round_trip` 14x20 (39)   | `combined_03_grand_machine` 20x34 (42)   |
+
+Màn trong `tests/fixtures/` là màn nhỏ dành riêng cho unit test (gồm một màn vô nghiệm), không thuộc benchmark.
+
+## Thực nghiệm và báo cáo
+
+```powershell
+pip install -r requirements.txt
+python run_experiments.py --repeat 3 --out results.csv   # ~75 giây (có đo bộ nhớ); thời gian = trung vị 3 lần
+python plot_results.py                                   # figures/*.png + figures/results_tables.md
 ```
 
-Mặc định dùng engine `engine.engine:Engine`, chạy mọi solver trên mọi level trong `levels/`,
-in bảng kết quả và ghi `results.csv`. Mỗi dòng gồm: solver, level, tìm được hay không, lời giải
-có hợp lệ không, độ dài, cost, số nút mở rộng, thời gian, bộ nhớ đỉnh. Thời gian và bộ nhớ đo ở
-hai lượt chạy riêng vì `tracemalloc` làm chậm chương trình.
+`figures/experiment_analysis.md` là bản nháp nhận xét cho phần Experiments (số liệu từ một lần chạy mẫu —
+chạy lại trên máy nhóm và cập nhật số). Solver mới (vd. A\*) chỉ cần đăng ký trong `solvers/__init__.py`; chạy lại hai
+lệnh trên là biểu đồ và bảng có thêm cột mới. `results.csv` bị `.gitignore`, nên hãy lưu bản dùng trong báo cáo ở nơi khác.
+
+## Khi đổi hàm cost hoặc thêm A\*
+
+- `run_experiments.py` và `plot_results.py` tự lấy số liệu mới (CSV có cột `cost`, hình `solution_cost.png`). Chạy lại cả hai.
+- `COST` trong `engine/engine.py` chỉ theo hướng (U/D/L/R/SWAP). Muốn cost phụ thuộc ô (phạt ô giòn, ưu đãi công tắc),
+  truyền hàm `cost_fn(state, action, next_state)` vào `Engine(level, cost_fn=...)` hoặc gán `engine.step_cost = ...`.
+- `optimal_moves` là số nước tối thiểu (BFS), **không** phải chi phí tối thiểu: khi cost không đều, UCS/A* có thể dùng nhiều
+  nước hơn `optimal_moves` mà vẫn tối ưu. So sánh UCS và A* bằng cột `cost`, không dùng `length`.
+- Heuristic của A\* phải admissible với hàm cost mới: h không vượt chi phí nhỏ nhất của một nước nhân số nước còn lại tối thiểu.
+- `tests/test_optimal_cost.py` kiểm tra A\* cho cùng chi phí với UCS trên 12 màn (tự chạy khi `"astar"` có trong `SOLVERS`).
 
 ## Thêm solver mới
 

@@ -1,12 +1,12 @@
-"""Chạy GUI 3D: python serve.py. Phục vụ web và API level/solver."""
+"""Chạy GUI 3D: python main.py (hoặc python serve.py). Phục vụ web và API level/solver."""
 import json
-import tempfile
 import threading
 import webbrowser
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
 
+from engine.catalog import load_catalog, to_gui_level
 from engine.engine import ACTIONS, TRANSITIONS, Engine
 from engine.state import SplitState, State
 from metrics import run_solver
@@ -15,48 +15,25 @@ from solvers import SOLVERS
 ROOT = Path(__file__).resolve().parent
 
 
+# Renderer 3D hiện chỉ vẽ và mô phỏng ô sàn thường. Thêm nhóm vào đây ("fragile", "switch", "combined") khi GUI đã hỗ trợ cơ chế tương ứng, để người chơi không gặp màn không thể chơi tay.
+GUI_GROUPS = {"basic"}
+
+
+def gui_entries():
+    return load_catalog(groups=GUI_GROUPS)       # đọc lại mỗi lần gọi: sửa file level không cần restart
+
+
 def load_gui_levels():
-    files = sorted((ROOT / "gui_levels").glob("*.json"))
-    return [json.loads(f.read_text(encoding="utf-8")) for f in files]
-
-
-def to_engine_level(data):
-    """Adapt legacy O/S/G tile maps to the engine's #/. schema."""
-    grid = data.get("grid", [])
-    start = goal = None
-    converted = []
-    for r, row in enumerate(grid):
-        chars = []
-        for c, ch in enumerate(row):
-            if ch == "S": start = [r, c]
-            elif ch == "G": goal = [r, c]
-            chars.append("." if ch == "." else "#")
-        converted.append("".join(chars))
-    if start is None or goal is None:
-        raise ValueError("Level cần có đúng một ô bắt đầu S và ô đích G")
-    out = {"grid": converted, "start": start, "goal": goal}
-    # Pass through engine-supported special mechanics if a level defines them.
-    for key in ("fragile", "bridges", "bridges_initial_open", "switches"):
-        if key in data: out[key] = data[key]
-    return out
+    return [to_gui_level(e) for e in gui_entries()]
 
 
 def make_problem(index):
-    """Dựng Engine cho level thứ `index` trong gui_levels. Trả về (problem, tên level)."""
-    levels = load_gui_levels()
-    if not isinstance(index, int) or index < 0 or index >= len(levels):
+    """Dựng Engine cho màn thứ `index` trong danh sách GUI. Trả về (problem, tên màn)."""
+    entries = gui_entries()
+    if not isinstance(index, int) or index < 0 or index >= len(entries):
         raise ValueError("level_index không hợp lệ")
-    engine_data = to_engine_level(levels[index])
-    # Engine's public constructor accepts a JSON path; use a temporary file so the
-    # adapter does not mutate the user's original level JSON.
-    with tempfile.NamedTemporaryFile("w", encoding="utf-8", suffix=".json", delete=False) as f:
-        json.dump(engine_data, f)
-        temp_path = f.name
-    try:
-        problem = Engine(temp_path)
-    finally:
-        Path(temp_path).unlink(missing_ok=True)
-    return problem, levels[index].get("name", f"Level {index + 1}")
+    entry = entries[index]
+    return Engine(entry["data"]), entry["data"]["name"]
 
 
 # ---------- serialize / deserialize State cho API ----------
