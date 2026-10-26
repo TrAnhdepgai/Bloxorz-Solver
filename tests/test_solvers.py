@@ -7,7 +7,8 @@ import pytest
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from engine import Engine, State  # noqa: E402
-from solvers import bfs, dfs, ids, ucs  # noqa: E402
+from solvers import astar, bfs, dfs, ids, ucs  # noqa: E402
+from engine.costs import weighted_cost # noqa: E402
 from solvers.base import replay_path  # noqa: E402
 import engine.engine as engine_module  # noqa: E402
 
@@ -15,7 +16,7 @@ LEVEL_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures")
 ALL_LEVELS = sorted(glob.glob(os.path.join(LEVEL_DIR, "*.json")))
 SOLVABLE = [p for p in ALL_LEVELS if "unsolvable" not in p]
 UNSOLVABLE = [p for p in ALL_LEVELS if "unsolvable" in p]
-SOLVERS = [bfs, dfs, ids, ucs]
+SOLVERS = [bfs, dfs, ids, ucs, astar]
 
 
 def path_cost(path):
@@ -75,3 +76,50 @@ def test_state_hashable_and_bridges_matter():
     b = State("S", 1, 1, frozenset({"B1"}))
     assert a != b
     assert len({a, b, State("S", 1, 1, frozenset())}) == 2
+
+def replay_cost(problem, path):
+    """Tổng cost thật của path trên engine (đúng cả khi cost phụ thuộc state/next_state)."""
+    state, total = problem.initial_state(), 0.0
+    for action in path:
+        for a, nxt, step in problem.get_successors(state):
+            if a == action:
+                state, total = nxt, total + step
+                break
+        else:
+            raise AssertionError(f"action {action} không hợp lệ")
+    return total
+
+
+@pytest.mark.parametrize("path", SOLVABLE)
+def test_astar_equals_ucs_cost_default_cost(path):
+    problem = Engine(path)
+    assert astar(problem).cost == pytest.approx(ucs(problem).cost)
+
+
+@pytest.mark.parametrize("path", SOLVABLE)
+def test_astar_equals_ucs_cost_weighted(path):
+    problem = Engine(path, cost_fn=weighted_cost)
+    a, u = astar(problem), ucs(problem)
+    assert replay_path(problem, a.path)
+    assert a.cost == pytest.approx(replay_cost(problem, a.path))
+    assert a.cost == pytest.approx(u.cost)
+
+
+@pytest.mark.parametrize("path", SOLVABLE)
+def test_ucs_weighted_not_worse_than_bfs_path(path):
+    problem = Engine(path, cost_fn=weighted_cost)
+    assert ucs(problem).cost <= replay_cost(problem, bfs(problem).path) + 1e-9
+
+
+@pytest.mark.parametrize("path", SOLVABLE)
+def test_astar_expands_no_more_than_ucs(path):
+    problem = Engine(path, cost_fn=weighted_cost)
+    assert astar(problem).expanded <= ucs(problem).expanded + 2   # hoà ở f = C* có thể lệch vài node
+
+
+def test_astar_with_unknown_cost_falls_back_to_ucs():
+    def costly_left(state, action, next_state):
+        return 10.0 if action == "L" else 1.0
+
+    problem = Engine(SOLVABLE[0], cost_fn=costly_left)
+    assert astar(problem).cost == pytest.approx(ucs(problem).cost)
