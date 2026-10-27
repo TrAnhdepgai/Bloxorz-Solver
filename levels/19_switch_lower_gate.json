@@ -1,0 +1,67 @@
+{
+  "name": "Lower Gate",
+  "group": "switch",
+  "difficulty": 19,
+  "benchmark": true,
+  "hint": "Công tắc nặng nằm ở nhánh dưới. Đi xuống đứng lên nó, rồi mới qua cổng.",
+  "optimal_moves": 13,
+  "grid": [
+    "########......",
+    "########......",
+    "########..####",
+    "....#.....####",
+    "....#.....####",
+    "....########..",
+    "....########.."
+  ],
+  "start": [
+    1,
+    1
+  ],
+  "goal": [
+    2,
+    12
+  ],
+  "bridges": {
+    "B1": [
+      [
+        2,
+        8
+      ],
+      [
+        2,
+        9
+      ],
+      [
+        3,
+        8
+      ],
+      [
+        3,
+        9
+      ],
+      [
+        4,
+        8
+      ],
+      [
+        4,
+        9
+      ]
+    ]
+  },
+  "switches": [
+    {
+      "pos": [
+        6,
+        6
+      ],
+      "type": "heavy",
+      "targets": [
+        "B1"
+      ],
+      "mode": "permanent",
+      "set": "open"
+    }
+  ]
+}

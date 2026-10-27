@@ -1,0 +1,94 @@
+{
+  "name": "Split Lesson",
+  "group": "switch",
+  "difficulty": 20,
+  "benchmark": true,
+  "hint": "Đứng lên công tắc tách. Một mảnh mở cầu, mảnh kia đi qua, rồi ghép lại.",
+  "optimal_moves": 16,
+  "grid": [
+    ".................",
+    ".######...######.",
+    ".######...######.",
+    ".######...######.",
+    "................."
+  ],
+  "start": [
+    2,
+    2
+  ],
+  "goal": [
+    2,
+    14
+  ],
+  "bridges": {
+    "B1": [
+      [
+        1,
+        7
+      ],
+      [
+        1,
+        8
+      ],
+      [
+        1,
+        9
+      ],
+      [
+        2,
+        7
+      ],
+      [
+        2,
+        8
+      ],
+      [
+        2,
+        9
+      ],
+      [
+        3,
+        7
+      ],
+      [
+        3,
+        8
+      ],
+      [
+        3,
+        9
+      ]
+    ]
+  },
+  "switches": [
+    {
+      "pos": [
+        2,
+        5
+      ],
+      "type": "split",
+      "teleport": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          12
+        ]
+      ]
+    },
+    {
+      "pos": [
+        2,
+        11
+      ],
+      "type": "soft",
+      "targets": [
+        "B1"
+      ],
+      "mode": "permanent",
+      "set": "open"
+    }
+  ]
+}

@@ -1,0 +1,75 @@
+{
+  "name": "Soft Touch",
+  "group": "switch",
+  "difficulty": 14,
+  "benchmark": true,
+  "hint": "Công tắc tròn: chạm là cầu bật. Lăn qua rồi vào hố.",
+  "optimal_moves": 11,
+  "grid": [
+    "######...####",
+    "######...####",
+    "######...####"
+  ],
+  "start": [
+    1,
+    1
+  ],
+  "goal": [
+    1,
+    11
+  ],
+  "bridges": {
+    "B1": [
+      [
+        0,
+        6
+      ],
+      [
+        0,
+        7
+      ],
+      [
+        0,
+        8
+      ],
+      [
+        1,
+        6
+      ],
+      [
+        1,
+        7
+      ],
+      [
+        1,
+        8
+      ],
+      [
+        2,
+        6
+      ],
+      [
+        2,
+        7
+      ],
+      [
+        2,
+        8
+      ]
+    ]
+  },
+  "switches": [
+    {
+      "pos": [
+        1,
+        4
+      ],
+      "type": "soft",
+      "targets": [
+        "B1"
+      ],
+      "mode": "permanent",
+      "set": "open"
+    }
+  ]
+}

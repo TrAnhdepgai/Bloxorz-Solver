@@ -1,0 +1,61 @@
+{
+  "name": "Toggle Once",
+  "group": "switch",
+  "difficulty": 15,
+  "hint": "Công tắc bật/tắt. Chỉ đạp một lần, nếu đạp lại cầu sẽ mất.",
+  "optimal_moves": 12,
+  "grid": [
+    "#####..#######",
+    "#####..#######",
+    "#####..#######"
+  ],
+  "start": [
+    1,
+    1
+  ],
+  "goal": [
+    1,
+    12
+  ],
+  "bridges": {
+    "B1": [
+      [
+        0,
+        5
+      ],
+      [
+        0,
+        6
+      ],
+      [
+        1,
+        5
+      ],
+      [
+        1,
+        6
+      ],
+      [
+        2,
+        5
+      ],
+      [
+        2,
+        6
+      ]
+    ]
+  },
+  "switches": [
+    {
+      "pos": [
+        1,
+        3
+      ],
+      "type": "soft",
+      "targets": [
+        "B1"
+      ],
+      "mode": "toggle"
+    }
+  ]
+}

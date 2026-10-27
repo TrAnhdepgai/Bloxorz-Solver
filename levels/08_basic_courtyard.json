@@ -1,0 +1,25 @@
+{
+  "name": "Courtyard",
+  "group": "basic",
+  "difficulty": 8,
+  "benchmark": true,
+  "hint": "Sân trong có lỗ hổng ở giữa. Đi vòng vành đai, đứng đúng ô cuối.",
+  "optimal_moves": 14,
+  "grid": [
+    "##########",
+    "##########",
+    "##......##",
+    "##......##",
+    "##......##",
+    "##########",
+    "##########"
+  ],
+  "start": [
+    0,
+    1
+  ],
+  "goal": [
+    6,
+    8
+  ]
+}

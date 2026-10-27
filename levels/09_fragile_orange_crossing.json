@@ -1,0 +1,47 @@
+{
+  "name": "Orange Crossing",
+  "group": "fragile",
+  "difficulty": 9,
+  "benchmark": true,
+  "hint": "Hai ô cam ở giữa: hãy nằm ngang đè lên chúng, đừng đứng.",
+  "optimal_moves": 12,
+  "grid": [
+    "##########",
+    "##########",
+    "##########"
+  ],
+  "start": [
+    1,
+    0
+  ],
+  "goal": [
+    1,
+    8
+  ],
+  "fragile": [
+    [
+      0,
+      4
+    ],
+    [
+      0,
+      5
+    ],
+    [
+      1,
+      4
+    ],
+    [
+      1,
+      5
+    ],
+    [
+      2,
+      4
+    ],
+    [
+      2,
+      5
+    ]
+  ]
+}

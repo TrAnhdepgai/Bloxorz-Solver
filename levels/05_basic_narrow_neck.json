@@ -1,0 +1,22 @@
+{
+  "name": "Narrow Neck",
+  "group": "basic",
+  "difficulty": 5,
+  "hint": "Cổ chai chỉ rộng một ô: nằm dọc theo cổ rồi mới đứng dậy.",
+  "optimal_moves": 12,
+  "grid": [
+    "####.......",
+    "####.......",
+    "###########",
+    ".......####",
+    ".......####"
+  ],
+  "start": [
+    1,
+    1
+  ],
+  "goal": [
+    3,
+    9
+  ]
+}

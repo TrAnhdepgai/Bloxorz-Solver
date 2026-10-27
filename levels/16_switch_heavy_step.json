@@ -1,0 +1,72 @@
+{
+  "name": "Heavy Step",
+  "group": "switch",
+  "difficulty": 16,
+  "benchmark": true,
+  "hint": "Công tắc hình X chỉ nhận khi khối đứng thẳng. Nằm đè lên thì chưa mở.",
+  "optimal_moves": 14,
+  "grid": [
+    ".######..####.",
+    ".######..####.",
+    ".######..####.",
+    ".######..####."
+  ],
+  "start": [
+    1,
+    2
+  ],
+  "goal": [
+    2,
+    12
+  ],
+  "bridges": {
+    "B1": [
+      [
+        0,
+        7
+      ],
+      [
+        0,
+        8
+      ],
+      [
+        1,
+        7
+      ],
+      [
+        1,
+        8
+      ],
+      [
+        2,
+        7
+      ],
+      [
+        2,
+        8
+      ],
+      [
+        3,
+        7
+      ],
+      [
+        3,
+        8
+      ]
+    ]
+  },
+  "switches": [
+    {
+      "pos": [
+        2,
+        4
+      ],
+      "type": "heavy",
+      "targets": [
+        "B1"
+      ],
+      "mode": "permanent",
+      "set": "open"
+    }
+  ]
+}
