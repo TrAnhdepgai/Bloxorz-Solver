@@ -1,7 +1,7 @@
 {
   "name": "Double Lock",
   "group": "combined",
-  "difficulty": 27,
+  "difficulty": 26,
   "benchmark": true,
   "hint": "Mở cầu ngang, đứng lên công tắc nặng, quay lại rồi nằm qua dải cam để vào hố.",
   "optimal_moves": 27,

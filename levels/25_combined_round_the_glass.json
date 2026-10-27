@@ -1,9 +1,9 @@
 {
   "name": "Round the Glass",
   "group": "combined",
-  "difficulty": 26,
+  "difficulty": 25,
   "hint": "Công tắc nặng nằm sau một khúc vòng. Ô cam chặn đường tắt.",
-  "optimal_moves": 13,
+  "optimal_moves": 18,
   "grid": [
     "#########.....",
     "#########.....",
@@ -28,7 +28,7 @@
     ],
     [
       1,
-      6
+      4
     ],
     [
       2,
@@ -41,6 +41,30 @@
     [
       6,
       8
+    ],
+    [
+      5,
+      9
+    ],
+    [
+      6,
+      9
+    ],
+    [
+      5,
+      10
+    ],
+    [
+      6,
+      10
+    ],
+    [
+      5,
+      11
+    ],
+    [
+      6,
+      11
     ]
   ],
   "bridges": {

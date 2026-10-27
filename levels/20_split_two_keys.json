@@ -1,7 +1,7 @@
 {
   "name": "Two Keys",
   "group": "switch",
-  "difficulty": 21,
+  "difficulty": 20,
   "hint": "Mỗi mảnh đạp một công tắc, mở một cầu. Ghép lại rồi mới tới hố.",
   "optimal_moves": 17,
   "grid": [

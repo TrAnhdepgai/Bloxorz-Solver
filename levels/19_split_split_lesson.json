@@ -1,7 +1,7 @@
 {
   "name": "Split Lesson",
   "group": "switch",
-  "difficulty": 20,
+  "difficulty": 19,
   "benchmark": true,
   "hint": "Đứng lên công tắc tách. Một mảnh mở cầu, mảnh kia đi qua, rồi ghép lại.",
   "optimal_moves": 16,

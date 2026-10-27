@@ -1,7 +1,7 @@
 {
   "name": "Rejoin",
   "group": "switch",
-  "difficulty": 22,
+  "difficulty": 21,
   "benchmark": true,
   "hint": "Tách khối, mảnh bên phải mở cầu, ghép lại rồi lăn tới hố.",
   "optimal_moves": 19,

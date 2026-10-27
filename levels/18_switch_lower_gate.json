@@ -1,18 +1,18 @@
 {
   "name": "Lower Gate",
   "group": "switch",
-  "difficulty": 19,
+  "difficulty": 18,
   "benchmark": true,
   "hint": "Công tắc nặng nằm ở nhánh dưới. Đi xuống đứng lên nó, rồi mới qua cổng.",
-  "optimal_moves": 13,
+  "optimal_moves": 20,
   "grid": [
     "########......",
     "########......",
     "########..####",
-    "....#.....####",
-    "....#.....####",
-    "....########..",
-    "....########.."
+    "...##.....####",
+    "...##.....####",
+    "...####.####..",
+    "...####.####.."
   ],
   "start": [
     1,

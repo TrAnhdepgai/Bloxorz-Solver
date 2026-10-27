@@ -12,33 +12,33 @@
 | 14_switch_soft_touch | switch | 135 | 108 | 746 | 138 | 82 |
 | 16_switch_heavy_step | switch | 181 | 130 | 1,734 | 177 | 106 |
 | 17_switch_two_bridges | switch | 267 | 215 | 7,262 | 273 | 211 |
-| 19_switch_lower_gate | switch | 101 | 105 | 1,039 | 108 | 89 |
-| 20_split_split_lesson | switch | 2,336 | 183 | 26,903 | 2,605 | 2,324 |
-| 22_split_rejoin | switch | 3,100 | 198 | 54,900 | 3,554 | 2,973 |
-| 23_combined_glass_gate | combined | 108 | 107 | 238 | 127 | 37 |
-| 25_combined_fragile_approach | combined | 164 | 155 | 1,032 | 177 | 89 |
-| 27_combined_double_lock | combined | 310 | 307 | 16,902 | 327 | 255 |
+| 18_switch_lower_gate | switch | 186 | 198 | 4,724 | 194 | 136 |
+| 19_split_split_lesson | switch | 2,336 | 183 | 26,903 | 2,605 | 2,324 |
+| 21_split_rejoin | switch | 3,100 | 198 | 54,900 | 3,554 | 2,973 |
+| 22_combined_glass_gate | combined | 141 | 109 | 3,049 | 142 | 116 |
+| 24_combined_fragile_approach | combined | 187 | 182 | 2,596 | 183 | 132 |
+| 26_combined_double_lock | combined | 310 | 307 | 16,902 | 327 | 255 |
 
 **Thời gian tìm kiếm, ms**
 
 | Màn | Nhóm | BFS | DFS | IDS | UCS | ASTAR |
 |---|---|---:|---:|---:|---:|---:|
-| 01_basic_first_steps | basic | 0.14 | 0.75 | 0.10 | 0.12 | 0.09 |
-| 04_basic_step_aside | basic | 0.69 | 0.93 | 0.90 | 0.77 | 0.55 |
-| 06_basic_two_rooms | basic | 1.85 | 2.26 | 14.51 | 2.30 | 1.86 |
-| 08_basic_courtyard | basic | 1.91 | 1.58 | 18.42 | 2.03 | 1.79 |
-| 09_fragile_orange_crossing | fragile | 1.25 | 1.09 | 14.19 | 1.53 | 1.44 |
-| 11_fragile_side_by_side | fragile | 1.61 | 1.35 | 24.98 | 1.75 | 1.35 |
-| 13_fragile_fragile_yard | fragile | 5.04 | 4.26 | 48.22 | 5.99 | 2.37 |
-| 14_switch_soft_touch | switch | 2.81 | 2.35 | 17.86 | 3.38 | 2.23 |
-| 16_switch_heavy_step | switch | 3.76 | 2.83 | 43.77 | 5.12 | 3.21 |
-| 17_switch_two_bridges | switch | 6.94 | 4.60 | 168 | 11.51 | 9.88 |
-| 19_switch_lower_gate | switch | 2.54 | 2.37 | 29.46 | 2.50 | 2.16 |
-| 20_split_split_lesson | switch | 73.27 | 3.62 | 775 | 78.66 | 68.57 |
-| 22_split_rejoin | switch | 77.21 | 4.63 | 1,585 | 89.01 | 79.52 |
-| 23_combined_glass_gate | combined | 2.15 | 2.15 | 5.10 | 2.81 | 0.98 |
-| 25_combined_fragile_approach | combined | 3.35 | 3.29 | 24.70 | 4.04 | 2.25 |
-| 27_combined_double_lock | combined | 6.21 | 6.20 | 391 | 7.02 | 6.54 |
+| 01_basic_first_steps | basic | 0.11 | 0.73 | 0.11 | 0.14 | 0.17 |
+| 04_basic_step_aside | basic | 0.66 | 0.89 | 0.92 | 0.83 | 0.52 |
+| 06_basic_two_rooms | basic | 1.86 | 3.14 | 14.42 | 2.10 | 1.91 |
+| 08_basic_courtyard | basic | 1.80 | 1.57 | 17.76 | 2.34 | 2.11 |
+| 09_fragile_orange_crossing | fragile | 1.72 | 1.08 | 14.15 | 1.53 | 1.61 |
+| 11_fragile_side_by_side | fragile | 1.87 | 1.51 | 26.52 | 1.95 | 1.29 |
+| 13_fragile_fragile_yard | fragile | 4.66 | 4.03 | 44.32 | 5.49 | 2.46 |
+| 14_switch_soft_touch | switch | 2.75 | 2.31 | 17.98 | 3.34 | 2.21 |
+| 16_switch_heavy_step | switch | 3.95 | 2.90 | 42.13 | 4.38 | 2.87 |
+| 17_switch_two_bridges | switch | 5.36 | 4.64 | 169 | 8.13 | 5.92 |
+| 18_switch_lower_gate | switch | 3.83 | 4.19 | 119 | 4.57 | 3.53 |
+| 19_split_split_lesson | switch | 48.97 | 3.52 | 707 | 73.53 | 68.96 |
+| 21_split_rejoin | switch | 80.57 | 4.62 | 1,492 | 108 | 94.57 |
+| 22_combined_glass_gate | combined | 2.48 | 2.17 | 63.52 | 3.01 | 2.73 |
+| 24_combined_fragile_approach | combined | 3.37 | 3.77 | 60.65 | 4.48 | 3.65 |
+| 26_combined_double_lock | combined | 6.28 | 5.91 | 399 | 6.84 | 6.47 |
 
 **Bộ nhớ đỉnh, KB**
 
@@ -54,12 +54,12 @@
 | 14_switch_soft_touch | switch | 39.21 | 50.81 | 32.67 | 47.77 | 46.12 |
 | 16_switch_heavy_step | switch | 45.89 | 62.82 | 45.91 | 61.34 | 55.82 |
 | 17_switch_two_bridges | switch | 62.03 | 97.68 | 64.77 | 79.48 | 80.52 |
-| 19_switch_lower_gate | switch | 30.77 | 41.98 | 25.62 | 39.64 | 48.16 |
-| 20_split_split_lesson | switch | 1,033 | 105 | 980 | 1,420 | 1,264 |
-| 22_split_rejoin | switch | 1,350 | 115 | 1,349 | 1,786 | 1,636 |
-| 23_combined_glass_gate | combined | 37.99 | 50.95 | 26.58 | 47.77 | 29.37 |
-| 25_combined_fragile_approach | combined | 46.92 | 71.01 | 38.97 | 63.55 | 63.41 |
-| 27_combined_double_lock | combined | 97.72 | 144 | 73.94 | 117 | 101 |
+| 18_switch_lower_gate | switch | 45.36 | 72.45 | 50.13 | 63.23 | 57.79 |
+| 19_split_split_lesson | switch | 1,033 | 105 | 980 | 1,420 | 1,264 |
+| 21_split_rejoin | switch | 1,350 | 115 | 1,349 | 1,786 | 1,636 |
+| 22_combined_glass_gate | combined | 39.09 | 48.80 | 36.91 | 47.20 | 53.45 |
+| 24_combined_fragile_approach | combined | 48.53 | 69.16 | 51.22 | 62.87 | 78.59 |
+| 26_combined_double_lock | combined | 97.72 | 144 | 73.94 | 117 | 101 |
 
 **Độ dài lời giải, số nước**
 
@@ -75,12 +75,12 @@
 | 14_switch_soft_touch | switch | 11 | 85 | 11 | 12 | 12 | 11 |
 | 16_switch_heavy_step | switch | 14 | 111 | 14 | 16 | 16 | 14 |
 | 17_switch_two_bridges | switch | 21 | 194 | 21 | 23 | 23 | 21 |
-| 19_switch_lower_gate | switch | 13 | 70 | 13 | 13 | 13 | 13 |
-| 20_split_split_lesson | switch | 16 | 106 | 16 | 16 | 18 | 16 |
-| 22_split_rejoin | switch | 19 | 130 | 19 | 19 | 19 | 19 |
-| 23_combined_glass_gate | combined | 8 | 84 | 8 | 8 | 8 | 8 |
-| 25_combined_fragile_approach | combined | 11 | 121 | 11 | 11 | 11 | 11 |
-| 27_combined_double_lock | combined | 27 | 204 | 27 | 29 | 29 | 27 |
+| 18_switch_lower_gate | switch | 20 | 124 | 20 | 20 | 20 | 20 |
+| 19_split_split_lesson | switch | 16 | 106 | 16 | 16 | 18 | 16 |
+| 21_split_rejoin | switch | 19 | 130 | 19 | 19 | 19 | 19 |
+| 22_combined_glass_gate | combined | 16 | 81 | 16 | 17 | 17 | 16 |
+| 24_combined_fragile_approach | combined | 15 | 109 | 15 | 15 | 15 | 15 |
+| 26_combined_double_lock | combined | 27 | 204 | 27 | 29 | 29 | 27 |
 
 **Chi phí lời giải**
 
@@ -96,9 +96,9 @@
 | 14_switch_soft_touch | switch | 19.00 | 135 | 19.00 | 18.00 | 18.00 | 18.00 |
 | 16_switch_heavy_step | switch | 24.00 | 177 | 24.00 | 22.00 | 22.00 | 22.00 |
 | 17_switch_two_bridges | switch | 37.00 | 308 | 37.00 | 35.00 | 35.00 | 35.00 |
-| 19_switch_lower_gate | switch | 23.00 | 112 | 23.00 | 23.00 | 23.00 | 23.00 |
-| 20_split_split_lesson | switch | 21.00 | 149 | 21.00 | 21.00 | 21.00 | 21.00 |
-| 22_split_rejoin | switch | 26.00 | 185 | 26.00 | 24.00 | 24.00 | 24.00 |
-| 23_combined_glass_gate | combined | 16.00 | 134 | 16.00 | 16.00 | 16.00 | 16.00 |
-| 25_combined_fragile_approach | combined | 19.00 | 195 | 19.00 | 19.00 | 19.00 | 19.00 |
-| 27_combined_double_lock | combined | 47.00 | 322 | 47.00 | 45.00 | 45.00 | 45.00 |
+| 18_switch_lower_gate | switch | 36.00 | 202 | 36.00 | 36.00 | 36.00 | 36.00 |
+| 19_split_split_lesson | switch | 21.00 | 149 | 21.00 | 21.00 | 21.00 | 21.00 |
+| 21_split_rejoin | switch | 26.00 | 185 | 26.00 | 24.00 | 24.00 | 24.00 |
+| 22_combined_glass_gate | combined | 24.00 | 127 | 24.00 | 23.00 | 23.00 | 23.00 |
+| 24_combined_fragile_approach | combined | 21.00 | 173 | 21.00 | 21.00 | 21.00 | 21.00 |
+| 26_combined_double_lock | combined | 47.00 | 322 | 47.00 | 45.00 | 45.00 | 45.00 |
