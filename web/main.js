@@ -872,6 +872,9 @@ function readSave() {
   } catch { return { progress: null, maxLevel: 0, best: {}, settings: { ...DEF } }; }
 }
 let save = readSave();
+// Thử phát nhạc ngay khi mở trang; nếu trình duyệt chặn autoplay, các sự kiện
+// pointerdown/keydown phía trên sẽ phát lại khi người chơi tương tác.
+startBgMusic();
 function persist() { try { localStorage.setItem(KEY, JSON.stringify(save)); } catch { /* bỏ qua */ } }
 let inMenu = true, started = false;
 // Hướng dẫn xuất hiện tự động khi mở game lần đầu trong trang này.
