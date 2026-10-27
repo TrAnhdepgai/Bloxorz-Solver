@@ -2,6 +2,7 @@
   "name": "Heavy Glass",
   "group": "combined",
   "difficulty": 23,
+   "benchmark": true,
   "hint": "Đứng lên công tắc nặng để mở cầu, nhưng ô trước hố thì chỉ được nằm.",
   "optimal_moves": 23,
   "grid": [

@@ -2,7 +2,6 @@
   "name": "Step Aside",
   "group": "basic",
   "difficulty": 4,
-  "benchmark": true,
   "hint": "Không thể đi thẳng: phải vòng xuống rồi mới đứng vào hố.",
   "optimal_moves": 5,
   "grid": [

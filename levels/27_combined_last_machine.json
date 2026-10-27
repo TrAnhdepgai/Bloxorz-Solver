@@ -3,6 +3,7 @@
   "group": "combined",
   "difficulty": 27,
   "hint": "Công tắc gạt, ô cam, rồi công tắc nặng. Đừng đạp lại công tắc gạt.",
+  "benchmark": true,
   "optimal_moves": 39,
   "grid": [
     "########...######.",

@@ -2,7 +2,6 @@
   "name": "Two Rooms",
   "group": "basic",
   "difficulty": 6,
-  "benchmark": true,
   "hint": "Hai phòng nối bằng cầu hẹp. Vào phòng sau hãy chỉnh hướng trước khi tới hố.",
   "optimal_moves": 11,
   "grid": [
