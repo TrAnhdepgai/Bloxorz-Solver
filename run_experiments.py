@@ -30,7 +30,7 @@ def main():
     ap.add_argument("--group", nargs="+", choices=GROUPS, help="chỉ chạy các nhóm này")
     ap.add_argument("--all", action="store_true", help="chạy cả màn không thuộc bộ benchmark")
     ap.add_argument("--solvers", nargs="+", default=list(SOLVERS), choices=list(SOLVERS))
-    ap.add_argument("--cost", default="uniform", choices=list(COST_FUNCTIONS),
+    ap.add_argument("--cost", default="weighted", choices=list(COST_FUNCTIONS),
                 help="hàm cost của engine: uniform (mọi nước 1.0) hoặc weighted (đổi tư thế tốn 2.0)")
     ap.add_argument("--out", default="results.csv")
     ap.add_argument("--repeat", type=int, default=3, help="số lần chạy để lấy thời gian trung vị (mặc định 3)")

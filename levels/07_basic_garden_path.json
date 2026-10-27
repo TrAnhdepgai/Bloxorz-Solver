@@ -1,0 +1,24 @@
+{
+  "name": "Garden Path",
+  "group": "basic",
+  "difficulty": 7,
+  "hint": "Nhiều chỗ rẽ. Đi men theo mép ngoài, đừng chui vào ngõ cụt.",
+  "optimal_moves": 11,
+  "grid": [
+    "..####....",
+    ".######...",
+    ".####.##..",
+    "####...##.",
+    "####...###",
+    "..########",
+    "......####"
+  ],
+  "start": [
+    1,
+    1
+  ],
+  "goal": [
+    6,
+    8
+  ]
+}

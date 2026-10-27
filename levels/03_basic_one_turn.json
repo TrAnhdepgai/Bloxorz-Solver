@@ -1,0 +1,21 @@
+{
+  "name": "One Turn",
+  "group": "basic",
+  "difficulty": 3,
+  "hint": "Hết đường ngang thì đổi hướng nằm rồi rẽ xuống.",
+  "optimal_moves": 9,
+  "grid": [
+    "#####..",
+    "#####..",
+    "#######",
+    "....###"
+  ],
+  "start": [
+    0,
+    1
+  ],
+  "goal": [
+    2,
+    6
+  ]
+}

@@ -1,7 +1,7 @@
 # Bloxorz-Solver
 
 Dự án AI cơ bản: mô hình hóa trò chơi Bloxorz thành bài toán tìm kiếm, cài đặt các thuật toán
-BFS, DFS, IDS, UCS, A* để giải, và có giao diện web 3D để chơi tay hoặc xem solver giải.
+BFS, DFS, IDS, UCS, A\* để giải, và có giao diện web 3D để chơi tay hoặc xem solver giải.
 
 ## Yêu cầu
 
@@ -20,20 +20,20 @@ và tự mở trình duyệt. Nhấn `Ctrl+C` để tắt.
 
 ## Cấu trúc thư mục
 
-| Đường dẫn | Vai trò |
-|---|---|
-| `main.py` | Điểm vào của dự án, gọi `serve.main()` |
-| `serve.py` | Server HTTP: phục vụ `web/` và các API |
-| `engine/` | Engine trò chơi: `State`, `SplitState`, `Engine`, đọc level |
-| `solvers/` | Các thuật toán tìm kiếm; `SOLVERS` là bảng đăng ký theo tên |
-| `metrics.py` | Đo thời gian, bộ nhớ đỉnh, số nút mở rộng, độ dài lời giải |
-| `run_experiments.py` | Chạy các solver trên `levels/`, in bảng và ghi CSV |
-| `levels/` | Mọi màn chơi theo MỘT định dạng, dùng cho engine, solver, GUI và thực nghiệm |
-| `engine/catalog.py` | Nạp danh sách màn từ `levels/`, lọc theo nhóm / benchmark |
-| `compute_optimal.py` | Tính và ghi `optimal_moves` (BFS) cho từng màn |
-| `plot_results.py` | Vẽ biểu đồ và bảng từ `results.csv` vào `figures/` |
-| `web/` | Giao diện Three.js |
-| `tests/` | Test bằng pytest |
+| Đường dẫn            | Vai trò                                                                      |
+| -------------------- | ---------------------------------------------------------------------------- |
+| `main.py`            | Điểm vào của dự án, gọi `serve.main()`                                       |
+| `serve.py`           | Server HTTP: phục vụ `web/` và các API                                       |
+| `engine/`            | Engine trò chơi: `State`, `SplitState`, `Engine`, đọc level                  |
+| `solvers/`           | Các thuật toán tìm kiếm; `SOLVERS` là bảng đăng ký theo tên                  |
+| `metrics.py`         | Đo thời gian, bộ nhớ đỉnh, số nút mở rộng, độ dài lời giải                   |
+| `run_experiments.py` | Chạy các solver trên `levels/`, in bảng và ghi CSV                           |
+| `levels/`            | Mọi màn chơi theo MỘT định dạng, dùng cho engine, solver, GUI và thực nghiệm |
+| `engine/catalog.py`  | Nạp danh sách màn từ `levels/`, lọc theo nhóm / benchmark                    |
+| `compute_optimal.py` | Tính và ghi `optimal_moves` (BFS) cho từng màn                               |
+| `plot_results.py`    | Vẽ biểu đồ và bảng từ `results.csv` vào `figures/`                           |
+| `web/`               | Giao diện Three.js                                                           |
+| `tests/`             | Test bằng pytest                                                             |
 
 ## Engine
 
@@ -76,9 +76,16 @@ Mỗi màn là một file JSON trong `levels/`, tên file `<nhóm>_<số>_<tên>
   "start": [1, 1],
   "goal": [1, 3],
   "fragile": [[1, 2]],
-  "bridges": {"B1": [[0, 6], [0, 7]]},
+  "bridges": {
+    "B1": [
+      [0, 6],
+      [0, 7]
+    ]
+  },
   "bridges_initial_open": [],
-  "switches": [{"pos": [1, 3], "type": "soft", "targets": ["B1"], "mode": "toggle"}]
+  "switches": [
+    { "pos": [1, 3], "type": "soft", "targets": ["B1"], "mode": "toggle" }
+  ]
 }
 ```
 
@@ -117,7 +124,6 @@ Màn trong `tests/fixtures/` là màn nhỏ dành riêng cho unit test (gồm m�
 ## Thực nghiệm và báo cáo
 
 ```powershell
-pip install -r requirements.txt
 python run_experiments.py --repeat 3 --out results.csv   # ~75 giây (có đo bộ nhớ); thời gian = trung vị 3 lần
 python plot_results.py                                   # figures/*.png + figures/results_tables.md
 ```
@@ -153,15 +159,19 @@ Tất cả endpoint POST nhận và trả JSON. Lỗi trả về `{"ok": false, 
 **`POST /api/solve`**
 
 ```json
-{"level_index": 0, "algorithm": "bfs", "cost": "uniform"}
+{ "level_index": 0, "algorithm": "bfs", "cost": "uniform" }
 ```
 
-`cost` (tuỳ chọn): `uniform` | `weighted` (chỉ UCS và A* dùng). Trả về: `solvable`, `path`, `cost`, `length`, `expanded`, `time_ms`, `memory_kb`.
+`cost` (tuỳ chọn): `uniform` | `weighted` (chỉ UCS và A\* dùng). Trả về: `solvable`, `path`, `cost`, `length`, `expanded`, `time_ms`, `memory_kb`.
 
 **`POST /api/step`**
 
 ```json
-{"level_index": 0, "state": {"orient": "S", "row": 0, "col": 0, "bridges": [], "split": null}, "action": "R"}
+{
+  "level_index": 0,
+  "state": { "orient": "S", "row": 0, "col": 0, "bridges": [], "split": null },
+  "action": "R"
+}
 ```
 
 - Bỏ `state` thì dùng trạng thái ban đầu; bỏ `action` thì chỉ trả về trạng thái và thông tin tile.

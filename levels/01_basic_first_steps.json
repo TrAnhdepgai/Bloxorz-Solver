@@ -2,13 +2,19 @@
   "name": "First Steps",
   "group": "basic",
   "difficulty": 1,
-  "hint": "Lăn phải hai lần là tới nơi.",
+  "hint": "Đứng thẳng, lăn phải hai lần là rơi vào hố.",
   "optimal_moves": 2,
   "grid": [
     "#####",
     "#####",
     "#####"
   ],
-  "start": [1, 1],
-  "goal": [1, 4]
+  "start": [
+    1,
+    1
+  ],
+  "goal": [
+    1,
+    4
+  ]
 }
