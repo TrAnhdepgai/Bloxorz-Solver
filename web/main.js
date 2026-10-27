@@ -427,7 +427,8 @@ const effectSounds = {
   loose: new Audio("./audio/loose.mp3"),
   broke: new Audio("./audio/broke-tiles.mp3"),
   win: new Audio("./audio/win.mp3"),
-  split: new Audio("./audio/split.mp3")
+  split: new Audio("./audio/split.mp3"),
+  click: new Audio("./audio/click.mp3")
 };
 Object.values(effectSounds).forEach((sound) => { sound.preload = "auto"; sound.volume = 0.8; });
 function playEffectSound(kind) {
@@ -843,6 +844,24 @@ $("swap").onclick = () => swapCube();
 $("rl").onclick = () => turn(-1);
 $("rr").onclick = () => turn(1);
 
+// Âm click dùng chung cho mọi button, kể cả các button được tạo sau khi tải màn.
+effectSounds.click.preload = "auto";
+effectSounds.click.volume = 0.65;
+document.addEventListener("click", (e) => {
+  if (!e.target.closest || !e.target.closest("button:not(:disabled)") || save.settings.muteSounds) return;
+  const sound = effectSounds.click;
+  sound.pause(); sound.currentTime = 0;
+  sound.play().catch(() => {});
+});
+
+function openGuide() { $("guideOverlay").hidden = false; }
+function closeGuide() { $("guideOverlay").hidden = true; }
+$("guideBtn").onclick = openGuide;
+$("mGuide").onclick = openGuide;
+$("guideClose").onclick = closeGuide;
+$("guideOverlay").addEventListener("click", (e) => { if (e.target === $("guideOverlay")) closeGuide(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("guideOverlay").hidden) closeGuide(); });
+
 /* ---------- lưu trữ (localStorage) + menu khởi đầu ---------- */
 const KEY = "bloxorz.v1";
 const DEF = { hint: true, optimal: true, auto: true, snow: true, fx: true, muteMusic: false, muteSounds: false };
@@ -855,6 +874,8 @@ function readSave() {
 let save = readSave();
 function persist() { try { localStorage.setItem(KEY, JSON.stringify(save)); } catch { /* bỏ qua */ } }
 let inMenu = true, started = false;
+// Hướng dẫn xuất hiện tự động khi mở game lần đầu trong trang này.
+openGuide();
 
 const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 function showPanel(id) {
@@ -1259,7 +1280,7 @@ function tick(now) {
       if (winT > 1.6 && !resultShown) showResult();   // chờ người chơi chọn bước tiếp theo
     }
     if (level.goal) {
-      heart.position.set(level.goal[1] + 0.55, 0.95 + Math.sin(now / 450) * 0.07, level.goal[0] - 0.45);
+      heart.position.set(level.goal[1], 0.95 + Math.sin(now / 450) * 0.07, level.goal[0]);
       heart.rotation.y = az;
     }
     if (inMenu) { az += dt * 0.12; azT = az; }          // menu: camera tự xoay chậm
