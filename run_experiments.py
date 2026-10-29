@@ -1,18 +1,23 @@
 """Chạy các solver trên bộ màn chơi CỐ ĐỊNH (benchmark), in bảng và ghi CSV.
 
-Bộ benchmark = các file trong levels/ có "benchmark": true (4 nhóm x 3 màn: nhỏ / vừa / lớn).
+Bộ benchmark = mọi file trong levels/ có "benchmark": true, dùng chung cho mọi solver.
+Bốn nhóm (khó dần): basic (không tile nâng cao), fragile, switch (cầu/công tắc/split),
+combined (fragile + cầu/công tắc).
+
+Thời gian = trung vị của --repeat lần (mặc định 3), chỉ tính solver().
+Bộ nhớ = lượt tracemalloc riêng. Chi tiết ở metrics.py.
 
 Ví dụ:
-    python run_experiments.py                          # bộ benchmark, mọi solver đã đăng ký
-    python run_experiments.py --group fragile switch   # chỉ một số nhóm
-    python run_experiments.py --all                    # cả các màn chiến dịch không thuộc benchmark
-    python run_experiments.py --repeat 5 --out results.csv   # thời gian = trung vị của 5 lần chạy
+    python run_experiments.py --repeat 3 --out figures/results_used_in_report.csv
+    python plot_results.py --csv figures/results_used_in_report.csv --out figures --tables tables
+    python run_experiments.py --group fragile switch
+    python run_experiments.py --all
     python run_experiments.py --solvers bfs ucs --no-memory
 """
 import argparse
 import importlib
 
-from engine.catalog import GROUPS, LEVEL_DIR, load_catalog
+from engine.catalog import GROUPS, LEVEL_DIR, describe, load_catalog
 from engine.costs import COST_FUNCTIONS
 from metrics import format_table, results_to_csv, run_solver
 from solvers import SOLVERS
@@ -50,7 +55,13 @@ def main():
         for name in args.solvers:
             r = run_solver(SOLVERS[name], problem, entry["id"], measure_memory=not args.no_memory,
                            repeats=args.repeat)
+            info = describe(data)
             r.group, r.optimal_moves = data["group"], data.get("optimal_moves")
+            r.name = data.get("name") or ""
+            r.rows, r.cols = info["rows"], info["cols"]
+            r.bridge_cells = info["bridge_cells"]
+            r.fragile_cells = info["fragile"]
+            r.switch_types = "" if info["switches"] == "-" else info["switches"]
             results.append(r)
 
     print("\n" + format_table(results))

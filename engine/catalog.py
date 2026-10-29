@@ -100,9 +100,12 @@ def describe(data: dict) -> dict:
     kinds = sorted({sw["type"] for sw in data.get("switches", [])})
     return {
         "size": f"{len(grid)}x{len(grid[0])}",
+        "rows": len(grid),
+        "cols": len(grid[0]) if grid else 0,
         "floor": sum(row.count("#") for row in grid),
         "fragile": len(data.get("fragile", [])),
         "bridges": len(bridges),
+        "bridge_cells": sum(len(cells) for cells in bridges.values()),
         "switches": ",".join(kinds) if kinds else "-",
     }
 
