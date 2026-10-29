@@ -295,27 +295,57 @@
                 #guideOverlay[hidden] { display:none; }
                 .guide-card { width:min(820px,100%); max-height:min(88vh,850px); overflow:auto; padding:24px; border:3px solid #F4A93A; border-radius:26px; background:linear-gradient(145deg,#fffef4,#effff5); color:var(--ink); box-shadow:0 20px 60px rgba(38,60,90,.28); animation:guidePop .35s cubic-bezier(.2,1.3,.4,1); }
                 .guide-head { display:flex; align-items:center; justify-content:space-between; gap:12px; }
-                .guide-head h2 { margin:0; color:#E38B20; }
+                .guide-head h2 { margin:0; color:#E38B20; font:600 24px "Lora", Georgia, serif; font-style:normal; }
+                .guide-page > h3 { margin:10px 0 12px; font:600 21px "Lora", Georgia, serif; font-style:normal; }
                 .guide-close { padding:7px 15px; }
-                .guide-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin-top:16px; }
-                .guide-item { min-height:160px; padding:14px; border:2px solid rgba(244,169,58,.35); border-radius:20px; background:rgba(255,255,255,.8); }
-                .guide-item h3 { margin:0 0 5px; font:600 17px "Lora", Georgia, "Times New Roman", serif; }
-                .guide-item p { margin:0; font-size:14px; line-height:1.5; }
-                .guide-demo { height:68px; display:flex; align-items:center; justify-content:center; gap:12px; position:relative; margin-bottom:8px; overflow:hidden; }
-                .demo-tile { width:44px; height:12px; border-radius:5px; background:#BDF2DA; box-shadow:0 5px 0 #79C7A8; position:relative; }
-                .demo-block { position:absolute; z-index:1; width:24px; height:26px; border-radius:6px; background:linear-gradient(135deg,#ffe86b,#ffb82e); box-shadow:0 4px 0 #e99a24; animation:demoHop 2s ease-in-out infinite; }
+                .guide-page[hidden] { display:none; }
+                .guide-count { color:var(--muted); font-weight:700; }
+                .guide-nav { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:18px; flex-wrap:wrap; }
+                .guide-nav .guide-actions { display:flex; gap:8px; margin-left:auto; }
+                .guide-nav button { padding:8px 15px; }
+                .guide-swatch { display:inline-block; width:42px; height:36px; border-radius:9px; vertical-align:middle; margin:0 7px 0 0; box-shadow:0 5px 0 #0002; position:relative; }
+                .guide-swatch::before { content:""; position:absolute; inset:5px; border-radius:6px; background:rgba(255,255,255,.26); }
+                .guide-swatch.cracked { background-color:#FFB36B !important; background-image:linear-gradient(135deg,transparent 46%,#7e3718 47%,#7e3718 50%,transparent 51%),linear-gradient(45deg,transparent 61%,#7e3718 62%,#7e3718 65%,transparent 66%); }
+                .guide-swatch.goal { background:#FFD54F !important; }
+                .guide-swatch.goal::after { content:""; position:absolute; width:17px; height:12px; left:12px; top:11px; border-radius:50%; background:#27AE60; box-shadow:inset 0 2px 2px #155d37; }
+                .guide-swatch.bridge { background:#7EC8F0 !important; }
+                .guide-swatch.button-tile { background:#101116 !important; }
+                .guide-swatch.button-tile::before { inset:10px; border-radius:50%; background:#55D6A6; box-shadow:0 2px 0 #fff6; }
+                .guide-swatch.button-heavy::before { background:#FF625D; }
+                .guide-swatch.button-split::before { background:#A879E8; }
+                .guide-swatch.tele::before { background:#F4A93A; }
+                .guide-demo { min-height:86px; display:flex; align-items:center; justify-content:center; gap:12px; position:relative; margin:6px 0 10px; overflow:hidden; }
+                .demo-tile { display:block; width:56px; height:56px; flex:none; border:3px solid rgba(255,255,255,.36); border-radius:10px; background:#82E0AA; box-shadow:0 6px 0 #55a87d; position:relative; }
+                .demo-tile.cream { background:#FFFDD0; box-shadow:0 6px 0 #c9c7a6; }
+                .demo-tile.yellow { background:#FFE57F; box-shadow:0 6px 0 #d9b94b; }
+                .demo-tile.fragile { background-color:#FFB36B; box-shadow:0 6px 0 #d78346; background-image:linear-gradient(135deg,transparent 45%,#8b421e 46%,#8b421e 49%,transparent 50%),linear-gradient(55deg,transparent 62%,#8b421e 63%,#8b421e 66%,transparent 67%),linear-gradient(110deg,transparent 27%,#8b421e 28%,#8b421e 30%,transparent 31%); }
+                .demo-tile.goal { background:#FFD54F; box-shadow:0 6px 0 #d6a92c; }
+                .demo-tile.goal::after { content:""; position:absolute; width:26px; height:18px; left:12px; top:12px; border-radius:50%; background:#27AE60; box-shadow:inset 0 3px 3px #145d37,0 0 0 3px #6FD3A0; }
+                .demo-tile.bridge { background:#7EC8F0; box-shadow:0 6px 0 #5596bd; }
+                .demo-tile.switch { background:#101116; box-shadow:0 6px 0 #090a0d; }
+                .demo-tile.switch::before { content:""; position:absolute; inset:7px; border-radius:7px; background:#252832; }
+                .demo-tile.tele { background:#FFFDD0; box-shadow:0 6px 0 #c9c7a6; }
+                .demo-tile.tele::after,.demo-tile.switch::after { content:""; position:absolute; width:24px; height:24px; left:13px; top:9px; border:2px solid #fffdf4; border-radius:50%; background:radial-gradient(circle at 35% 30%,#fff8,transparent 35%),var(--orb,#55D6A6); box-shadow:0 2px 3px #0005; }
+                .demo-tile.heavy { --orb:#FF625D; }
+                .demo-tile.split { --orb:#A879E8; }
+                .demo-tile.tele::after { --orb:#F4A93A; }
+                .demo-pose { position:relative; display:flex; flex-direction:column; align-items:center; width:82px; flex:none; }
+                .demo-block { position:absolute; z-index:1; left:50%; top:24px; transform:translate(-50%,-50%); width:24px; height:38px; border:2px solid #fff6; border-radius:7px; background:linear-gradient(135deg,#FFE082,#ffb82e); box-shadow:0 4px 0 #e99a24; }
+                .demo-block.horizontal { width:42px; height:22px; }
+                .demo-label { display:block; text-align:center; font:14px "Lora",Georgia,serif; color:var(--muted); }
                 .demo-crack { background:#ff9c75; animation:demoCrack 2s steps(2,end) infinite; }
                 .demo-button { width:38px; height:18px; border-radius:50%; background:#55D6A6; box-shadow:0 3px #38a87f; z-index:1; }
                 .demo-button.heavy { background:#FF625D; box-shadow:0 3px #d84743; }
                 .demo-bridge { width:50px; height:13px; border-radius:4px; background:#7EC8F0; opacity:.15; animation:bridgeRise 2s ease-in-out infinite; }
-                .demo-split { position:absolute; width:22px; height:25px; border-radius:5px; background:#ffd34f; box-shadow:0 3px #e9a527; animation:splitLeft 2.2s ease-in-out infinite; }
-                .demo-split.second { background:#efa8ed; animation:splitRight 2.2s ease-in-out infinite; }
+                .demo-split { display:block; width:42px; height:38px; border:2px solid #fff6; border-radius:7px; background:#FFE082; box-shadow:0 4px 0 #e99a24; }
+                .demo-split.second { background:#E6A5ED; box-shadow:0 4px 0 #b66abf; }
                 @keyframes guidePop { from {opacity:0;transform:translateY(12px) scale(.97)} to {opacity:1;transform:none} }
-                @keyframes demoHop { 0%,25%,100% {transform:translate(0,0)} 45%,70% {transform:translate(20px,-13px)} }
-                @keyframes demoCrack { 0%,45% {background:#ff9c75;transform:scale(1)} 65%,100% {background:#d8d8d8;transform:scale(.7);opacity:.45} }
+                @keyframes demoCrack { 0%,45% {filter:none} 65%,100% {filter:grayscale(1);opacity:.65} }
                 @keyframes bridgeRise { 0%,30%,100% {opacity:.12;transform:translateY(9px) scaleY(.35)} 55%,80% {opacity:1;transform:translateY(0) scaleY(1)} }
-                @keyframes splitLeft { 0%,25%,100% {transform:translateX(0)} 55%,75% {transform:translateX(-24px)} }
-                @keyframes splitRight { 0%,25%,100% {transform:translateX(0)} 55%,75% {transform:translateX(24px)} }
+                .guide-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin-top:16px; }
+                .guide-item { min-height:160px; padding:14px; border:2px solid rgba(244,169,58,.35); border-radius:20px; background:rgba(255,255,255,.8); }
+                .guide-item h3 { margin:0 0 5px; font:600 17px "Lora", Georgia, "Times New Roman", serif; }
+                .guide-item p { margin:0; font-size:14px; line-height:1.5; }
                 @media(max-width:600px) { .guide-grid { grid-template-columns:1fr; } .guide-card { padding:18px; } }
 
 
@@ -759,7 +789,7 @@
         <div id="bar">
 
                 <button id="menuBtn" title="Mở menu">☰ Menu</button>
-                <button id="guideBtn" title="Hướng dẫn với các tiles đặc biệt">Hướng dẫn</button>
+                <button id="guideBtn" title="Xem lại hướng dẫn chơi và các ô đặc biệt">Hướng dẫn</button>
 
                 <button id="restart" title="Chơi lại màn này">Restart</button>
                 <select id="solverAlgorithm" aria-label="Thuật toán giải" title="Chọn thuật toán giải">
@@ -822,14 +852,14 @@
 
         <div id="guideOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="guideTitle">
                 <div class="guide-card">
-                        <div class="guide-head"><h2 id="guideTitle">Hướng dẫn các ô đặc biệt ✨</h2><button id="guideClose" class="guide-close" aria-label="Đóng hướng dẫn">Đóng ✕</button></div>
-                        <p>Quan sát khối di chuyển và hiệu ứng của từng loại ô nhé:</p>
-                        <div class="guide-grid">
-                                <article class="guide-item"><div class="guide-demo"><i class="demo-tile demo-crack"></i><i class="demo-block"></i></div><h3>Ô cam · dễ vỡ</h3><p>Khối đứng thẳng đáp xuống sẽ làm ô nứt vỡ; khối nằm ngang đi qua thì an toàn.</p></article>
-                                <article class="guide-item"><div class="guide-demo"><i class="demo-tile"></i><i class="demo-button"></i><i class="demo-bridge"></i><i class="demo-block"></i></div><h3>Nút nhẹ ◎</h3><p>Chỉ cần chạm vào là nút bật, cầu tương ứng trồi lên hoặc hạ xuống.</p></article>
-                                <article class="guide-item"><div class="guide-demo"><i class="demo-tile"></i><i class="demo-button heavy"></i><i class="demo-bridge"></i><i class="demo-block"></i></div><h3>Nút nặng ▣</h3><p>Cần khối đứng thẳng đè lên nút để đổi trạng thái cầu. Nằm ngang trên nút sẽ không kích hoạt.</p></article>
-                                <article class="guide-item"><div class="guide-demo"><i class="demo-tile"></i><i class="demo-button" style="background:#A879E8"></i><i class="demo-split"></i><i class="demo-split second"></i></div><h3>Nút split ◇</h3><p>Đứng lên nút sẽ tách khối thành hai khối ở vị trí chỉ định. Dùng Space hoặc “Đổi khối” để chuyển qua lại.</p></article>
-                        </div>
+                        <div class="guide-head"><h2 id="guideTitle">Hướng dẫn chơi ✨</h2><button id="guideClose" class="guide-close" aria-label="Bỏ qua hướng dẫn">Bỏ qua ✕</button></div>
+                        <p class="guide-count" id="guideCount" aria-live="polite"></p>
+                        <section class="guide-page"><h3>Mục tiêu và điều khiển</h3><p>Đưa khối vàng về tư thế đứng thẳng trên ô đích có viền vàng, hố xanh. Nếu khối rơi khỏi sàn, màn sẽ được chơi lại.</p><div class="guide-grid"><article class="guide-item"><div class="guide-demo"><span class="demo-pose"><i class="demo-tile"></i><i class="demo-block"></i><b class="demo-label">Đứng thẳng</b></span><span class="demo-pose"><i class="demo-tile"></i><i class="demo-block horizontal"></i><b class="demo-label">Nằm ngang</b></span></div><h3>Khối và sàn</h3><p>Dùng phím mũi tên hoặc WASD để lăn khối. Khối có thể đứng thẳng, nằm ngang hoặc dọc theo chiều còn lại; hãy tính vị trí sau mỗi nước.</p></article><article class="guide-item"><div class="guide-demo"><i class="demo-tile yellow"></i></div><h3>Phím hữu ích</h3><p>Q/E xoay góc nhìn, R chơi lại màn, [ / ] đổi màn. Khi tách khối, dùng Space hoặc nút “Đổi khối” để chuyển điều khiển.</p></article></div></section>
+                        <section class="guide-page" hidden><h3>Ô thường, đích và ô dễ vỡ</h3><div class="guide-grid"><article class="guide-item"><div class="guide-demo"><i class="demo-tile"></i><i class="demo-tile cream"></i><i class="demo-tile yellow"></i></div><h3>Ô mint, kem, vàng · sàn thường</h3><p>Đi được bình thường. Ô bắt đầu luôn màu kem; các ô kem/vàng khác vẫn là sàn thường.</p></article><article class="guide-item"><div class="guide-demo"><i class="demo-tile goal"></i><i class="demo-tile fragile"></i></div><h3>Ô đích và ô cam dễ vỡ</h3><p>Đưa khối đứng thẳng vào hố xanh để hoàn thành màn. Ô cam có vết nứt: khối đứng thẳng đáp xuống sẽ làm ô vỡ; khối nằm ngang đi qua thì an toàn.</p></article></div></section>
+                        <section class="guide-page" hidden><h3>Cầu và nút điều khiển</h3><div class="guide-grid"><article class="guide-item"><div class="guide-demo"><i class="demo-tile bridge"></i><i class="demo-tile bridge"></i></div><h3>Cầu · xanh dương, tím, hồng hoặc vàng</h3><p>Cầu hiện thành các tile màu. Nút tương ứng sẽ nâng hoặc hạ cầu; cầu đang hạ không thể đi qua.</p></article><article class="guide-item"><div class="guide-demo"><i class="demo-tile switch"></i><i class="demo-tile switch heavy"></i></div><h3>Nút nhẹ xanh mint · nút nặng đỏ</h3><p>Cả hai nằm trên tile đen. Nút nhẹ chỉ cần khối chạm vào; nút nặng cần khối đứng thẳng đè lên, khối nằm ngang không kích hoạt.</p></article></div></section>
+                        <section class="guide-page" hidden><h3>Split và dịch chuyển</h3><div class="guide-grid"><article class="guide-item"><div class="guide-demo"><i class="demo-tile switch split"></i><i class="demo-split"></i><i class="demo-split second"></i></div><h3>Nút split tím trên tile đen</h3><p>Chạm nút để tách khối thành hai khối vàng và hồng. Dùng Space hoặc “Đổi khối” để chuyển điều khiển; đưa hai khối tới điểm cần thiết để ghép lại.</p></article><article class="guide-item"><div class="guide-demo"><i class="demo-tile tele"></i><i class="demo-tile tele"></i></div><h3>Điểm dịch chuyển màu cam</h3><p>Trong màn split, mỗi khối được đưa tới một điểm dịch chuyển tương ứng khi kích hoạt nút tím.</p></article></div></section>
+                        <section class="guide-page" hidden><h3>Lưu ý</h3><div class="guide-grid"><article class="guide-item"><div class="guide-demo"><i class="demo-tile switch"></i><i class="demo-tile bridge"></i></div><h3>Trạng thái cầu</h3><p>Một số nút mở cầu vĩnh viễn; một số nút đổi trạng thái cầu mỗi lần chạm. Quan sát cầu sau khi bấm để biết lối đi đã mở chưa.</p></article><article class="guide-item"><div class="guide-demo"><i class="demo-tile fragile"></i><i class="demo-tile goal"></i></div><h3>Lên kế hoạch trước</h3><p>Giữ khối trên sàn, để ý tư thế khi đáp xuống ô dễ vỡ, và chỉ vào ô đích khi khối đang đứng thẳng.</p></article></div></section>
+                        <div class="guide-nav"><button id="guideSkip">Bỏ qua hướng dẫn</button><div class="guide-actions"><button id="guidePrev">← Trước</button><button id="guideNext" class="primary">Tiếp →</button></div></div>
                 </div>
         </div>
 

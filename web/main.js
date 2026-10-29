@@ -854,11 +854,25 @@ document.addEventListener("click", (e) => {
   sound.play().catch(() => {});
 });
 
-function openGuide() { $("guideOverlay").hidden = false; }
+let guidePage = 0;
+const guidePages = [...document.querySelectorAll(".guide-page")];
+function renderGuide() {
+  guidePages.forEach((page, i) => { page.hidden = i !== guidePage; });
+  $("guideCount").textContent = `${guidePage + 1}/${guidePages.length}`;
+  $("guidePrev").hidden = guidePage === 0;
+  $("guideNext").textContent = guidePage === guidePages.length - 1 ? "Bắt đầu chơi →" : "Tiếp →";
+}
+function openGuide() { guidePage = 0; renderGuide(); $("guideOverlay").hidden = false; }
 function closeGuide() { $("guideOverlay").hidden = true; }
 $("guideBtn").onclick = openGuide;
 $("mGuide").onclick = openGuide;
 $("guideClose").onclick = closeGuide;
+$("guideSkip").onclick = closeGuide;
+$("guidePrev").onclick = () => { guidePage = Math.max(0, guidePage - 1); renderGuide(); };
+$("guideNext").onclick = () => {
+  if (guidePage < guidePages.length - 1) { guidePage++; renderGuide(); }
+  else closeGuide();
+};
 $("guideOverlay").addEventListener("click", (e) => { if (e.target === $("guideOverlay")) closeGuide(); });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("guideOverlay").hidden) closeGuide(); });
 
@@ -877,8 +891,6 @@ let save = readSave();
 startBgMusic();
 function persist() { try { localStorage.setItem(KEY, JSON.stringify(save)); } catch { /* bỏ qua */ } }
 let inMenu = true, started = false;
-// Hướng dẫn xuất hiện tự động khi mở game lần đầu trong trang này.
-openGuide();
 
 const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 function showPanel(id) {
@@ -911,7 +923,7 @@ function renderLevels() {
     const stateText = mk("span", "level-state", best == null ? "Chưa hoàn thành" : `Kỷ lục: ${best} nước`);
     card.append(name, starLine, stateText);
     card.onclick = () => {
-      started = true; closeMenu(); loadLevel(i);
+      started = true; closeMenu(); loadLevel(i); if (i === 0) openGuide();
     };
     box.append(card);
   });
@@ -953,7 +965,7 @@ function renderSet() {
 
 $("mNew").onclick = () => {
   if ((save.progress ?? 0) > 0 && !confirm("Bắt đầu lại từ màn 1 nha? Thành tựu của bạn vẫn được giữ ♡")) return;
-  started = true; closeMenu(); loadLevel(0);
+  started = true; closeMenu(); loadLevel(0); openGuide();
 };
 $("mCont").onclick = () => {
   if (started) {
