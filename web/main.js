@@ -858,7 +858,7 @@ let guidePage = 0;
 const guidePages = [...document.querySelectorAll(".guide-page")];
 function renderGuide() {
   guidePages.forEach((page, i) => { page.hidden = i !== guidePage; });
-  $("guideCount").textContent = `${guidePage + 1}/${guidePages.length}`;
+  $("guideCount").textContent = `${guidePage + 1}/${guidePages.length} · Dùng ← / → để chuyển trang`;
   $("guidePrev").hidden = guidePage === 0;
   $("guideNext").textContent = guidePage === guidePages.length - 1 ? "Bắt đầu chơi →" : "Tiếp →";
 }
@@ -874,7 +874,18 @@ $("guideNext").onclick = () => {
   else closeGuide();
 };
 $("guideOverlay").addEventListener("click", (e) => { if (e.target === $("guideOverlay")) closeGuide(); });
-document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("guideOverlay").hidden) closeGuide(); });
+document.addEventListener("keydown", (e) => {
+  if ($("guideOverlay").hidden) return;
+  if (e.key === "Escape") { e.stopPropagation(); closeGuide(); return; }
+  if (e.key === "ArrowLeft") {
+    e.preventDefault(); e.stopPropagation();
+    if (guidePage > 0) { guidePage--; renderGuide(); }
+  } else if (e.key === "ArrowRight") {
+    e.preventDefault(); e.stopPropagation();
+    if (guidePage < guidePages.length - 1) { guidePage++; renderGuide(); }
+    else closeGuide();
+  }
+});
 
 /* ---------- lưu trữ (localStorage) + menu khởi đầu ---------- */
 const KEY = "bloxorz.v1";
