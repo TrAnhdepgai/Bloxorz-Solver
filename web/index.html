@@ -11,12 +11,17 @@
         <title>Bloxorz ♡</title>
 
         <link rel="stylesheet"
-                href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=Playfair+Display:ital,wght@1,500&display=swap">
+                href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500&display=swap">
 
         <style>
                 @font-face {
-                        font-family: "Milgan";
-                        src: url("./milgan.otf") format("opentype");
+                        font-family: "Dearpix";
+                        src: url("./dearpix-1-94.ttf") format("truetype");
+                        font-display: swap;
+                }
+                @font-face {
+                        font-family: "Snow For Santa";
+                        src: url("./MTD-Snow-For-Santa.otf") format("opentype");
                         font-display: swap;
                 }
 
@@ -53,7 +58,7 @@
                         height: 100%;
                         overflow: hidden;
                         color: var(--ink);
-                        font-family: "Lora", Georgia, "Times New Roman", serif
+                        font-family: "Snow For Santa", Georgia, "Times New Roman", serif
                 }
 
                 html {
@@ -141,12 +146,15 @@
 
                 #title {
                         display: inline-block;
-                        font-family: "Milgan", Georgia, "Times New Roman", serif;
+                        font-family: "Dearpix", Georgia, "Times New Roman", serif;
                         font-style: italic;
                         font-weight: 500;
                         font-size: 34px;
                         margin: 0 0 0 -8px;
                         padding: 0 8px;
+                        color: #25477B;
+                        -webkit-text-stroke: 0;
+                        text-shadow: 0 1px 0 #fff, 0 2px 0 rgba(255,224,130,.9), 0 5px 10px rgba(37,71,123,.22), 0 0 12px rgba(130,224,170,.24);
 
                         background: linear-gradient(transparent 62%, rgba(255, 228, 90, .9) 62%, rgba(255, 228, 90, .9) 92%, transparent 92%)
                 }
@@ -191,7 +199,7 @@
                 }
 
                 select {
-                        font: 600 15px "Lora", Georgia, serif;
+                        font: 400 15px "Snow For Santa", Georgia, serif;
                         background: #fff;
                         border: 3px solid #F4A93A;
                         color: var(--ink);
@@ -202,7 +210,7 @@
                 }
 
                 button {
-                        font: 600 15px "Lora", Georgia, serif;
+                        font: 400 15px "Snow For Santa", Georgia, serif;
                         background: #fff;
                         border: 3px solid #F4A93A;
                         color: var(--ink);
@@ -295,11 +303,11 @@
                 #guideOverlay[hidden] { display:none; }
                 .guide-card { width:min(820px,100%); max-height:min(88vh,850px); overflow:auto; padding:24px; border:3px solid #F4A93A; border-radius:26px; background:linear-gradient(145deg,#fffef4,#effff5); color:var(--ink); box-shadow:0 20px 60px rgba(38,60,90,.28); animation:guidePop .35s cubic-bezier(.2,1.3,.4,1); }
                 .guide-head { display:flex; align-items:center; justify-content:space-between; gap:12px; }
-                .guide-head h2 { margin:0; color:#E38B20; font:600 24px "Lora", Georgia, serif; font-style:normal; }
-                .guide-page > h3 { margin:10px 0 12px; font:600 21px "Lora", Georgia, serif; font-style:normal; }
+                .guide-head h2 { margin:0; color:#E38B20; font:400 24px "Snow For Santa", Georgia, serif; font-style:normal; }
+                .guide-page > h3 { margin:10px 0 12px; font:400 21px "Snow For Santa", Georgia, serif; font-style:normal; }
                 .guide-close { padding:7px 15px; }
                 .guide-page[hidden] { display:none; }
-                .guide-count { color:var(--muted); font-weight:700; }
+                .guide-count { color:var(--muted); font-weight:400; }
                 .guide-nav { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:18px; flex-wrap:wrap; }
                 .guide-nav .guide-actions { display:flex; gap:8px; margin-left:auto; }
                 .guide-nav button { padding:8px 15px; }
@@ -332,7 +340,7 @@
                 .demo-pose { position:relative; display:flex; flex-direction:column; align-items:center; width:82px; flex:none; }
                 .demo-block { position:absolute; z-index:1; left:50%; top:24px; transform:translate(-50%,-50%); width:24px; height:38px; border:2px solid #fff6; border-radius:7px; background:linear-gradient(135deg,#FFE082,#ffb82e); box-shadow:0 4px 0 #e99a24; }
                 .demo-block.horizontal { width:42px; height:22px; }
-                .demo-label { display:block; text-align:center; font:14px "Lora",Georgia,serif; color:var(--muted); }
+                .demo-label { display:block; text-align:center; font:14px "Snow For Santa",Georgia,serif; color:var(--muted); }
                 .demo-crack { background:#ff9c75; animation:demoCrack 2s steps(2,end) infinite; }
                 .demo-button { width:38px; height:18px; border-radius:50%; background:#55D6A6; box-shadow:0 3px #38a87f; z-index:1; }
                 .demo-button.heavy { background:#FF625D; box-shadow:0 3px #d84743; }
@@ -344,7 +352,7 @@
                 @keyframes bridgeRise { 0%,30%,100% {opacity:.12;transform:translateY(9px) scaleY(.35)} 55%,80% {opacity:1;transform:translateY(0) scaleY(1)} }
                 .guide-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin-top:16px; }
                 .guide-item { min-height:160px; padding:14px; border:2px solid rgba(244,169,58,.35); border-radius:20px; background:rgba(255,255,255,.8); }
-                .guide-item h3 { margin:0 0 5px; font:600 17px "Lora", Georgia, "Times New Roman", serif; }
+                .guide-item h3 { margin:0 0 5px; font:400 17px "Snow For Santa", Georgia, "Times New Roman", serif; }
                 .guide-item p { margin:0; font-size:14px; line-height:1.5; }
                 @media(max-width:600px) { .guide-grid { grid-template-columns:1fr; } .guide-card { padding:18px; } }
 
@@ -391,12 +399,15 @@
 
                 .logo {
                         display: inline-block;
-                        font-family: "Milgan", Georgia, "Times New Roman", serif;
+                        font-family: "Dearpix", Georgia, "Times New Roman", serif;
                         font-style: italic;
                         font-weight: 500;
                         font-size: 54px;
                         margin: 6px 0 0;
                         padding: 0 10px;
+                        color: #25477B;
+                        -webkit-text-stroke: 0;
+                        text-shadow: 0 1px 0 #fff, 0 2px 0 rgba(255,224,130,.9), 0 6px 12px rgba(37,71,123,.24), 0 0 16px rgba(130,224,170,.26);
 
                         background: linear-gradient(transparent 60%, rgba(255, 228, 90, .9) 60%, rgba(255, 228, 90, .9) 92%, transparent 92%)
                 }
@@ -529,10 +540,13 @@
                 }
 
                 .level-card .level-name {
-                        font-family: "Milgan", Georgia, serif;
+                        font-family: "Dearpix", Georgia, serif;
                         font-size: 15px;
                         line-height: 1.35;
-                        font-weight: 700;
+                        font-weight: 500;
+                        color: #25477B;
+                        -webkit-text-stroke: 0;
+                        text-shadow: 0 1px 0 #fff, 0 2px 0 rgba(255,224,130,.8), 0 4px 8px rgba(37,71,123,.2), 0 0 10px rgba(130,224,170,.2);
                         overflow-wrap: anywhere
                 }
 
@@ -852,7 +866,7 @@
 
         <div id="guideOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="guideTitle">
                 <div class="guide-card">
-                        <div class="guide-head"><h2 id="guideTitle">Hướng dẫn chơi ✨</h2><button id="guideClose" class="guide-close" aria-label="Bỏ qua hướng dẫn">Bỏ qua ✕</button></div>
+                        <div class="guide-head"><h2 id="guideTitle">Hướng dẫn chơi</h2><button id="guideClose" class="guide-close" aria-label="Bỏ qua hướng dẫn">Bỏ qua ✕</button></div>
                         <p class="guide-count" id="guideCount" aria-live="polite"></p>
                         <section class="guide-page"><h3>Mục tiêu và điều khiển</h3><p>Đưa khối vàng về tư thế đứng thẳng trên ô đích có viền vàng, hố xanh. Nếu khối rơi khỏi sàn, màn sẽ được chơi lại.</p><div class="guide-grid"><article class="guide-item"><div class="guide-demo"><span class="demo-pose"><i class="demo-tile"></i><i class="demo-block"></i><b class="demo-label">Đứng thẳng</b></span><span class="demo-pose"><i class="demo-tile"></i><i class="demo-block horizontal"></i><b class="demo-label">Nằm ngang</b></span></div><h3>Khối và sàn</h3><p>Dùng phím mũi tên hoặc WASD để lăn khối. Khối có thể đứng thẳng, nằm ngang hoặc dọc theo chiều còn lại; hãy tính vị trí sau mỗi nước.</p></article><article class="guide-item"><div class="guide-demo"><i class="demo-tile yellow"></i></div><h3>Phím hữu ích</h3><p>Q/E xoay góc nhìn, R chơi lại màn, [ / ] đổi màn. Khi tách khối, dùng Space hoặc nút “Đổi khối” để chuyển điều khiển.</p></article></div></section>
                         <section class="guide-page" hidden><h3>Ô thường, đích và ô dễ vỡ</h3><div class="guide-grid"><article class="guide-item"><div class="guide-demo"><i class="demo-tile"></i><i class="demo-tile cream"></i><i class="demo-tile yellow"></i></div><h3>Ô mint, kem, vàng · sàn thường</h3><p>Đi được bình thường. Ô bắt đầu luôn màu kem; các ô kem/vàng khác vẫn là sàn thường.</p></article><article class="guide-item"><div class="guide-demo"><i class="demo-tile goal"></i><i class="demo-tile fragile"></i></div><h3>Ô đích và ô cam dễ vỡ</h3><p>Đưa khối đứng thẳng vào hố xanh để hoàn thành màn. Ô cam có vết nứt: khối đứng thẳng đáp xuống sẽ làm ô vỡ; khối nằm ngang đi qua thì an toàn.</p></article></div></section>
