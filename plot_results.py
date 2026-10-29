@@ -1,9 +1,20 @@
-"""Vẽ biểu đồ và bảng markdown từ results.csv (do run_experiments.py ghi).
+"""Sinh bảng LaTeX và biểu đồ PDF đúng chỗ \\input / \\figorwarn của báo cáo.
 
-    python plot_results.py                       # đọc results.csv -> figures/*.png + figures/results_tables.md
-    python plot_results.py --csv results.csv --out figures
+    python plot_results.py
+    python plot_results.py --csv figures/results_used_in_report.csv --out figures --tables tables
 
-Cần: pip install matplotlib. Solver mới (vd. astar) tự xuất hiện trong biểu đồ khi có trong CSV.
+Đầu ra (đúng mẫu mục Thực nghiệm):
+    tables/testset.tex           các màn: Cỡ, Fragile, Bridge (số ô), Switch, Tối ưu (BFS)
+    tables/results_by_tier.tex   trung bình theo nhóm, chỉ trên màn giải được (replay hợp lệ)
+    tables/results_detail.tex    chi tiết từng màn (phụ lục)
+    figures/fig_expanded.pdf     node mở rộng trung bình theo nhóm (thang log)
+    figures/fig_time.pdf         thời gian trung bình theo nhóm, ms (thang log)
+    figures/fig_memory.pdf       bộ nhớ đỉnh trung bình theo nhóm, KB (thang log)
+    figures/fig_length.pdf       độ dài lời giải trung bình theo nhóm (số nước, thang tuyến tính)
+    figures/fig_scaling.pdf      node mở rộng theo độ dài tối ưu (mỗi chấm là một màn)
+
+Trung bình = trung bình cộng. "Giải" = số màn giải được / tổng số màn trong nhóm.
+Một màn tính là giải được khi found và valid không phải False (path đã replay trên engine).
 """
 import argparse
 import csv
@@ -15,149 +26,352 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
-# (cột CSV, nhãn trục, hệ số nhân, tên file)
-METRICS = [
-    ("expanded", "Số node mở rộng (log)", 1, "expanded_nodes"),
-    ("time_s", "Thời gian tìm kiếm, ms (log)", 1000, "search_time"),
-    ("peak_mem_kb", "Bộ nhớ đỉnh, KB (log)", 1, "peak_memory"),
-    ("length", "Độ dài lời giải, số nước (log)", 1, "solution_length"),
-    ("cost", "Chi phí lời giải (log)", 1, "solution_cost"),   # khác độ dài khi hàm cost không đều
-]
+plt.rcParams["font.family"] = "DejaVu Sans"
+plt.rcParams["axes.unicode_minus"] = False
+plt.rcParams["pdf.fonttype"] = 42
+plt.rcParams["ps.fonttype"] = 42
+
 COLORS = {"bfs": "#4C78A8", "dfs": "#E45756", "ids": "#F58518", "ucs": "#54A24B", "astar": "#B279A2"}
+GROUP_ORDER = ("basic", "fragile", "switch", "combined")
 GROUP_NAMES = {"basic": "Cơ bản", "fragile": "Ô giòn", "switch": "Công tắc", "combined": "Kết hợp"}
+NUMERIC = ("expanded", "time_s", "peak_mem_kb", "length", "cost", "optimal_moves",
+           "rows", "cols", "bridge_cells", "fragile_cells")
+STALE = (
+    "expanded_nodes.png", "overview.png", "peak_memory.png", "search_time.png",
+    "solution_cost.png", "solution_length.png", "results_tables.md", "summary_vs_bfs.md",
+)
+
+
+def tex_escape(value):
+    s = str(value)
+    for a, b in (("\\", r"\textbackslash{}"), ("&", r"\&"), ("%", r"\%"), ("$", r"\$"),
+                 ("#", r"\#"), ("_", r"\_"), ("{", r"\{"), ("}", r"\}"),
+                 ("~", r"\textasciitilde{}"), ("^", r"\textasciicircum{}")):
+        s = s.replace(a, b)
+    return s
+
+
+def solver_label(name):
+    return {"astar": "A*", "bfs": "BFS", "dfs": "DFS", "ids": "IDS", "ucs": "UCS"}.get(name, name.upper())
+
+
+def solver_tex(name):
+    return r"A$^*$" if name == "astar" else tex_escape(solver_label(name))
+
+
+def group_label(name):
+    return GROUP_NAMES.get(name, name)
+
+
+def parse_bool(raw):
+    if raw is None:
+        return None
+    s = str(raw).strip().lower()
+    if s in ("", "none", "nan"):
+        return None
+    if s in ("true", "1", "yes"):
+        return True
+    if s in ("false", "0", "no"):
+        return False
+    return None
 
 
 def read_results(path):
     with open(path, encoding="utf-8", newline="") as f:
         rows = list(csv.DictReader(f))
     for r in rows:
-        for k in ("expanded", "time_s", "peak_mem_kb", "length", "cost", "optimal_moves"):
+        r["found"] = parse_bool(r.get("found")) is True
+        r["valid"] = parse_bool(r.get("valid"))
+        r["group"] = (r.get("group") or "").strip()
+        r["name"] = r.get("name") or ""
+        r["switch_types"] = (r.get("switch_types") or "").strip()
+        for k in NUMERIC:
+            raw = r.get(k, "")
+            if raw is None or str(raw).strip() == "":
+                r[k] = math.nan
+                continue
             try:
-                r[k] = float(r[k])
+                r[k] = float(raw)
             except (TypeError, ValueError):
                 r[k] = math.nan
     return rows
 
 
-def short(level):
-    parts = level.split("_")
-    return " ".join(parts[2:]) if len(parts) > 2 else level
+def finite(v):
+    return isinstance(v, (int, float)) and not math.isnan(v)
 
 
-def draw(ax, rows, levels, solvers, key, ylabel, scale, optimal=False):
-    width = 0.8 / len(solvers)
-    for i, s in enumerate(solvers):
-        vals = [next((r[key] * scale for r in rows if r["level"] == lv and r["solver"] == s), math.nan) for lv in levels]
-        xs = [j + (i - (len(solvers) - 1) / 2) * width for j in range(len(levels))]
-        ax.bar(xs, vals, width, label=s.upper(), color=COLORS.get(s))
-    if optimal:                                            # vạch đen = số nước tối ưu (BFS)
-        opt = [next(r["optimal_moves"] for r in rows if r["level"] == lv) for lv in levels]
-        ax.scatter(range(len(levels)), opt, marker="_", s=900, color="black", zorder=5, label="Tối ưu")
-    ax.set_yscale("log")
-    ax.set_ylabel(ylabel)
-    ax.set_xticks(range(len(levels)))
-    ax.set_xticklabels([short(lv) for lv in levels], rotation=40, ha="right", fontsize=8)
-    ax.grid(axis="y", which="major", alpha=0.3)
-    ax.set_axisbelow(True)
-    groups = [next(r["group"] for r in rows if r["level"] == lv) for lv in levels]
-    for j in range(1, len(levels)):                        # vạch phân cách nhóm + nhãn nhóm
-        if groups[j] != groups[j - 1]:
-            ax.axvline(j - 0.5, color="gray", ls=":", lw=1)
-    top = ax.get_ylim()[1]
-    for g in dict.fromkeys(groups):
-        idx = [j for j, x in enumerate(groups) if x == g]
-        ax.text(sum(idx) / len(idx), top, GROUP_NAMES.get(g, g), ha="center", va="bottom", fontsize=9, fontweight="bold")
-    ax.set_xlim(-0.6, len(levels) - 0.4)
+def is_solved(row):
+    """Giải được: có path và replay không báo invalid. valid=None (CSV cũ) vẫn tính nếu found."""
+    return row is not None and row["found"] and row["valid"] is not False
 
 
-def tables_markdown(rows, levels, solvers):
-    out = []
-    for key, label, scale, _ in METRICS:
-        if all(math.isnan(r[key]) for r in rows):
+def levels_in(rows):
+    return list(dict.fromkeys(r["level"] for r in rows))
+
+
+def groups_in(rows):
+    present = [g for g in GROUP_ORDER if any(r["group"] == g for r in rows)]
+    for r in rows:
+        if r["group"] and r["group"] not in present:
+            present.append(r["group"])
+    return present
+
+
+def levels_of(rows, group):
+    return [lv for lv in levels_in(rows) if any(r["level"] == lv and r["group"] == group for r in rows)]
+
+
+def row_of(rows, level, solver):
+    for r in rows:
+        if r["level"] == level and r["solver"] == solver:
+            return r
+    return None
+
+
+def solvers_in(rows):
+    return list(dict.fromkeys(r["solver"] for r in rows))
+
+
+def mean_on_solved(rows, group, solver, key, scale=1.0):
+    """Trung bình cộng của `key` trên các màn trong nhóm mà solver giải được.
+
+    Trả về (mean, n_solved, n_levels). mean = nan nếu không giải được màn nào
+    hoặc mọi giá trị đều thiếu.
+    """
+    levels = levels_of(rows, group)
+    vals = []
+    solved = 0
+    for lv in levels:
+        r = row_of(rows, lv, solver)
+        if not is_solved(r):
             continue
-        out += [f"**{label.replace(' (log)', '')}**", "",
-                "| Màn | Nhóm | " + " | ".join(s.upper() for s in solvers)
-                + (" | Tối ưu |" if key == "length" else " | Nhỏ nhất |" if key == "cost" else " |"),
-                "|---|---|" + "---:|" * (len(solvers) + (key in ("length", "cost")))]
+        solved += 1
+        if finite(r[key]):
+            vals.append(r[key] * scale)
+    mean = sum(vals) / len(vals) if vals else math.nan
+    return mean, solved, len(levels)
+
+
+def fmt_num(v, nd):
+    if not finite(v):
+        return "---"
+    if nd <= 0:
+        return str(int(round(v)))
+    return f"{v:.{nd}f}"
+
+
+def fmt_int_opt(v):
+    if not finite(v):
+        return "---"
+    return str(int(round(v)))
+
+
+def write_testset(rows, path):
+    lines = [
+        "% Sinh bởi plot_results.py — không sửa tay.",
+        r"\begin{tabular}{llrrrlr}",
+        r"\hline",
+        r"Màn & Nhóm & Cỡ & Fragile & Bridge & Switch & Tối ưu \\",
+        r"\hline",
+    ]
+    seen = set()
+    for r in rows:
+        if r["level"] in seen:
+            continue
+        seen.add(r["level"])
+        if finite(r["rows"]) and finite(r["cols"]):
+            size = f"${int(r['rows'])} \\times {int(r['cols'])}$"
+        else:
+            size = "---"
+        switches = r["switch_types"].replace(",", ", ") if r["switch_types"] else "---"
+        lines.append(
+            f"{tex_escape(r['level'])} & {tex_escape(group_label(r['group']))} & {size} & "
+            f"{fmt_int_opt(r['fragile_cells'])} & {fmt_int_opt(r['bridge_cells'])} & "
+            f"{tex_escape(switches)} & {fmt_int_opt(r['optimal_moves'])} \\\\"
+        )
+    lines += [r"\hline", r"\end{tabular}", ""]
+    path.write_text("\n".join(lines), encoding="utf-8")
+
+
+def write_tier(rows, solvers, groups, path):
+    lines = [
+        "% Sinh bởi plot_results.py — không sửa tay.",
+        "% Trung bình cộng trên các màn GIẢI ĐƯỢC (found và replay hợp lệ) trong nhóm.",
+        "% Thời gian mỗi màn là trung vị các lần lặp (time_s); cột dưới đây đổi ra ms. Bộ nhớ: KB.",
+        r"\begin{tabular}{llrlllll}",
+        r"\hline",
+        r"Nhóm & Solver & Giải & Node & Thời gian (ms) & Bộ nhớ (KB) & Độ dài & Cost \\",
+        r"\hline",
+    ]
+    specs = (
+        ("expanded", 1, 1),
+        ("time_s", 1000, 2),
+        ("peak_mem_kb", 1, 1),
+        ("length", 1, 2),
+        ("cost", 1, 2),
+    )
+    for gi, g in enumerate(groups):
+        if gi:
+            lines.append(r"\hline")
+        for s in solvers:
+            cells = []
+            solved = total = None
+            for key, scale, nd in specs:
+                mean, n_sol, n_all = mean_on_solved(rows, g, s, key, scale)
+                solved, total = n_sol, n_all
+                cells.append(fmt_num(mean, nd))
+            lines.append(
+                f"{tex_escape(group_label(g))} & {solver_tex(s)} & {solved}/{total} & "
+                + " & ".join(cells) + r" \\"
+            )
+    lines += [r"\hline", r"\end{tabular}", ""]
+    path.write_text("\n".join(lines), encoding="utf-8")
+
+
+def write_detail(rows, solvers, levels, path):
+    """Bảng từng màn cho phụ lục. Node/thời gian/bộ nhớ luôn ghi (kể cả không giải được);
+    độ dài và cost chỉ ghi khi lời giải hợp lệ."""
+    blocks = [
+        ("Số node mở rộng", "expanded", 1, 0, False),
+        ("Thời gian tìm kiếm (ms)", "time_s", 1000, 2, False),
+        ("Bộ nhớ đỉnh (KB)", "peak_mem_kb", 1, 1, False),
+        ("Độ dài lời giải (số nước)", "length", 1, 0, True),
+        ("Cost", "cost", 1, 2, True),
+    ]
+    header = " & ".join(["Màn", "Nhóm"] + [solver_tex(s) for s in solvers]) + r" \\"
+    colspec = "ll" + "r" * len(solvers)
+    chunks = [
+        "% Sinh bởi plot_results.py — không sửa tay. Phụ lục chi tiết từng màn.",
+        r"% \input{tables/results_detail.tex}",
+    ]
+    for title, key, scale, nd, solved_only in blocks:
+        chunks += [
+            r"{\textbf{" + tex_escape(title) + r"}}\\[0.4em]",
+            r"\begin{tabular}{" + colspec + "}",
+            r"\hline",
+            header,
+            r"\hline",
+        ]
         for lv in levels:
+            sample = next(r for r in rows if r["level"] == lv)
             cells = []
             for s in solvers:
-                v = next((r[key] * scale for r in rows if r["level"] == lv and r["solver"] == s), math.nan)
-                cells.append("-" if math.isnan(v) else (f"{v:,.0f}" if v >= 100 or key in ("expanded", "length")
-                                                      else f"{v:,.2f}"))
-            grp = next(r["group"] for r in rows if r["level"] == lv)
-            opt = []
-            if key == "length":
-                opt = [str(int(next(r["optimal_moves"] for r in rows if r["level"] == lv)))]
-            elif key == "cost":
-                costs = [r["cost"] for r in rows if r["level"] == lv and not math.isnan(r["cost"])]
-                opt = [f"{min(costs):,.2f}"]
-            out.append(f"| {lv} | {grp} | " + " | ".join(cells + opt) + " |")
-        out.append("")
-    return "\n".join(out)
+                r = row_of(rows, lv, s)
+                if r is None or (solved_only and not is_solved(r)) or not finite(r[key]):
+                    cells.append("---")
+                else:
+                    cells.append(fmt_num(r[key] * scale, nd))
+            chunks.append(
+                f"{tex_escape(lv)} & {tex_escape(group_label(sample['group']))} & "
+                + " & ".join(cells) + r" \\"
+            )
+        chunks += [r"\hline", r"\end{tabular}", "", r"\vspace{1.1em}", ""]
+    path.write_text("\n".join(chunks), encoding="utf-8")
 
 
-def summary_markdown(rows, levels, solvers, ref="bfs"):
-    """Tỉ lệ của từng solver so với BFS trên mọi màn: min–max (trung vị) và số màn không tệ hơn BFS.
-    Dùng để lấy số liệu viết nhận xét cho đúng với lần chạy hiện tại."""
-    if ref not in solvers:
-        return ""
+def _style_ax(ax, ylabel, log):
+    ax.set_ylabel(ylabel)
+    ax.grid(axis="y", which="both", alpha=0.3)
+    ax.set_axisbelow(True)
+    if log:
+        ax.set_yscale("log")
 
-    def get(lv, s, key):
-        return next((r[key] for r in rows if r["level"] == lv and r["solver"] == s), math.nan)
 
-    def cell(vals):
-        vals = [v for v in vals if not math.isnan(v)]
-        if not vals:
-            return "-"
-        vals_sorted = sorted(vals)
-        med = vals_sorted[len(vals) // 2] if len(vals) % 2 else (vals_sorted[len(vals) // 2 - 1] + vals_sorted[len(vals) // 2]) / 2
-        return f"{min(vals):.2f}–{max(vals):.2f} (tb {med:.2f}); ≤BFS: {sum(v <= 1 for v in vals)}/{len(vals)}"
+def draw_group_bars(path, rows, solvers, groups, key, scale, ylabel, log):
+    fig, ax = plt.subplots(figsize=(7.6, 4.3))
+    width = 0.8 / max(len(solvers), 1)
+    for i, s in enumerate(solvers):
+        vals = []
+        for g in groups:
+            mean, _, _ = mean_on_solved(rows, g, s, key, scale)
+            vals.append(mean if finite(mean) and (mean > 0 or not log) else math.nan)
+        xs = [j + (i - (len(solvers) - 1) / 2) * width for j in range(len(groups))]
+        ax.bar(xs, vals, width, label=solver_label(s), color=COLORS.get(s))
+    _style_ax(ax, ylabel, log)
+    ax.set_xticks(range(len(groups)))
+    ax.set_xticklabels([group_label(g) for g in groups])
+    ax.set_xlabel("Nhóm màn")
+    ax.legend(ncol=min(len(solvers), 5), fontsize=8, loc="upper center",
+              bbox_to_anchor=(0.5, -0.18), frameon=False)
+    fig.tight_layout()
+    fig.savefig(path, bbox_inches="tight")
+    plt.close(fig)
 
-    out = [f"Tỉ lệ so với {ref.upper()} (giá trị < 1 nghĩa là tốt hơn {ref.upper()}), trên {len(levels)} màn: "
-           "min–max (trung vị tb); ≤BFS = số màn solver không tệ hơn BFS.", "",
-           "| Solver | Node mở rộng | Thời gian | Bộ nhớ đỉnh | Độ dài / tối ưu |", "|---|---|---|---|---|"]
+
+def draw_scaling(path, rows, solvers, levels):
+    fig, ax = plt.subplots(figsize=(7.6, 4.4))
+    any_positive = False
     for s in solvers:
-        if s == ref:
-            continue
-        cols = [cell([get(lv, s, k) / get(lv, ref, k) for lv in levels]) for k in ("expanded", "time_s", "peak_mem_kb")]
-        cols.append(cell([get(lv, s, "length") / get(lv, s, "optimal_moves") for lv in levels]))
-        out.append(f"| {s.upper()} | " + " | ".join(cols) + " |")
-    return "\n".join(out) + "\n"
+        xs, ys = [], []
+        for lv in levels:
+            r = row_of(rows, lv, s)
+            if r is None or not finite(r["optimal_moves"]) or not finite(r["expanded"]):
+                continue
+            xs.append(r["optimal_moves"])
+            ys.append(r["expanded"])
+            if r["expanded"] > 0:
+                any_positive = True
+        ax.scatter(xs, ys, s=32, label=solver_label(s), color=COLORS.get(s), alpha=0.9, zorder=3)
+    ax.set_xlabel("Độ dài lời giải tối ưu (nước)")
+    ax.set_ylabel("Số node mở rộng")
+    if any_positive:
+        ax.set_yscale("log")
+    ax.grid(True, which="both", alpha=0.3)
+    ax.set_axisbelow(True)
+    ax.legend(ncol=min(len(solvers), 5), fontsize=8, loc="upper center",
+              bbox_to_anchor=(0.5, -0.18), frameon=False)
+    fig.tight_layout()
+    fig.savefig(path, bbox_inches="tight")
+    plt.close(fig)
+
+
+def any_finite_column(rows, key):
+    return any(finite(r[key]) for r in rows)
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--csv", default="results.csv")
     ap.add_argument("--out", default="figures")
+    ap.add_argument("--tables", default="tables")
     args = ap.parse_args()
 
     rows = read_results(args.csv)
-    levels = list(dict.fromkeys(r["level"] for r in rows))
-    solvers = list(dict.fromkeys(r["solver"] for r in rows))
+    if not rows:
+        raise SystemExit(f"CSV rỗng: {args.csv}")
+    levels = levels_in(rows)
+    solvers = solvers_in(rows)
+    groups = groups_in(rows)
     out = Path(args.out)
-    out.mkdir(exist_ok=True)
+    tables = Path(args.tables)
+    out.mkdir(parents=True, exist_ok=True)
+    tables.mkdir(parents=True, exist_ok=True)
+    for name in STALE:
+        stale = out / name
+        if stale.exists():
+            stale.unlink()
 
-    usable = [m for m in METRICS if not all(math.isnan(r[m[0]]) for r in rows)]
-    for key, label, scale, name in usable:                 # mỗi chỉ số một hình riêng (chèn vào báo cáo)
-        fig, ax = plt.subplots(figsize=(11, 4.6))
-        draw(ax, rows, levels, solvers, key, label, scale, optimal=(key == "length"))
-        ax.legend(ncol=len(solvers) + 1, fontsize=8, loc="upper left", bbox_to_anchor=(0, -0.28))
-        fig.tight_layout()
-        fig.savefig(out / f"{name}.png", dpi=200)
-        plt.close(fig)
+    write_testset(rows, tables / "testset.tex")
+    write_tier(rows, solvers, groups, tables / "results_by_tier.tex")
+    write_detail(rows, solvers, levels, tables / "results_detail.tex")
 
-    fig, axes = plt.subplots(2, 2, figsize=(15, 9))        # hình tổng quan 2x2
-    for ax, (key, label, scale, _) in zip(axes.flat, usable[:4]):   # hình tổng quan: 4 chỉ số đầu
-        draw(ax, rows, levels, solvers, key, label, scale, optimal=(key == "length"))
-    axes.flat[0].legend(fontsize=8, loc="upper left")
-    fig.tight_layout()
-    fig.savefig(out / "overview.png", dpi=200)
-    plt.close(fig)
-
-    (out / "results_tables.md").write_text(tables_markdown(rows, levels, solvers), encoding="utf-8")
-    (out / "summary_vs_bfs.md").write_text(summary_markdown(rows, levels, solvers), encoding="utf-8")
-    print(f"Đã ghi {len(usable) + 1} hình, results_tables.md và summary_vs_bfs.md vào {out}/")
+    figures = [
+        ("expanded", 1, "Số node mở rộng", True, "fig_expanded.pdf"),
+        ("time_s", 1000, "Thời gian tìm kiếm (ms)", True, "fig_time.pdf"),
+        ("peak_mem_kb", 1, "Bộ nhớ đỉnh (KB)", True, "fig_memory.pdf"),
+        ("length", 1, "Độ dài lời giải (số nước)", False, "fig_length.pdf"),
+    ]
+    written = []
+    for key, scale, ylabel, log, name in figures:
+        if not any_finite_column(rows, key):
+            continue
+        draw_group_bars(out / name, rows, solvers, groups, key, scale, ylabel, log)
+        written.append(name)
+    draw_scaling(out / "fig_scaling.pdf", rows, solvers, levels)
+    written.append("fig_scaling.pdf")
+    print(f"Đã ghi {', '.join(written)} vào {out}/")
+    print(f"Đã ghi testset.tex, results_by_tier.tex, results_detail.tex vào {tables}/")
 
 
 if __name__ == "__main__":

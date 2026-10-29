@@ -108,33 +108,35 @@ và đánh dấu `S`/`G`). GUI nạp cả 4 nhóm (`GUI_GROUPS` trong `serve.py`
 3. `python -m pytest -q` — kiểm tra định dạng, 4 nhóm x 3 màn, `optimal_moves` đúng.
 4. `python compute_optimal.py --check` — dùng trước khi commit (thoát mã 1 nếu có file lệch).
 
-## Bộ test cố định (benchmark): 4 nhóm x 3 màn
+## Bộ test cố định (benchmark)
 
-`python compute_optimal.py --list` in bảng đầy đủ.
+Mọi file `levels/*.json` có `"benchmark": true`, **cùng một danh sách** cho mọi solver. Bốn nhóm theo `group`, khó dần:
 
-| Nhóm     | Nhỏ                                   | Vừa                                   | Lớn                                      |
-| -------- | ------------------------------------- | ------------------------------------- | ---------------------------------------- |
-| basic    | `basic_02_little_corner` 4x7 (7 nước) | `basic_05_garden_maze` 7x12 (12)      | `basic_07_grand_maze` 22x40 (38)         |
-| fragile  | `fragile_01_stone_bridge` 4x16 (15)   | `fragile_02_two_crossings` 14x20 (25) | `fragile_03_glass_valley` 24x34 (37)     |
-| switch   | `switch_01_soft_bridge` 3x13 (11)     | `switch_02_two_gates` 14x22 (28)      | `switch_03_twin_cubes` 11x21 (33, split) |
-| combined | `combined_01_glass_gate` 7x22 (22)    | `combined_02_round_trip` 14x20 (39)   | `combined_03_grand_machine` 20x34 (42)   |
+| Nhóm | Nội dung |
+| --- | --- |
+| `basic` | sàn / void / hố; không fragile, cầu, công tắc |
+| `fragile` | có ô giòn |
+| `switch` | cầu + công tắc (soft, heavy, split; toggle hoặc permanent) |
+| `combined` | vừa ô giòn vừa cầu/công tắc |
+
+`python compute_optimal.py --list` in thống kê. Bảng đưa vào báo cáo (cỡ hàng×cột, số ô bridge, số nước tối ưu BFS) là `tables/testset.tex`, sinh tự động — không chép tay.
 
 Màn trong `tests/fixtures/` là màn nhỏ dành riêng cho unit test (gồm một màn vô nghiệm), không thuộc benchmark.
 
 ## Thực nghiệm và báo cáo
 
+Cách đo (khớp mục Thực nghiệm): thời gian = trung vị `--repeat` lần `time.perf_counter()` **chỉ quanh solver** (mặc định 3); bộ nhớ đỉnh = `tracemalloc` ở **lượt chạy riêng**; node mở rộng = trạng thái được lấy ra và sinh hậu duệ (IDS cộng dồn mọi tầng); độ dài = số nước, kèm `cost` khi cost không đều; mọi path được replay trên engine.
+
 ```powershell
-python run_experiments.py --repeat 3 --out results.csv   # ~75 giây (có đo bộ nhớ); thời gian = trung vị 3 lần
-python plot_results.py                                   # figures/*.png + figures/results_tables.md
+python run_experiments.py --repeat 3 --out figures/results_used_in_report.csv
+python plot_results.py --csv figures/results_used_in_report.csv --out figures --tables tables
 ```
 
-`figures/experiment_analysis.md` là bản nháp nhận xét cho phần Experiments (số liệu từ một lần chạy mẫu —
-chạy lại trên máy nhóm và cập nhật số). Solver mới (vd. A\*) chỉ cần đăng ký trong `solvers/__init__.py`; chạy lại hai
-lệnh trên là biểu đồ và bảng có thêm cột mới. `results.csv` bị `.gitignore`, nên hãy lưu bản dùng trong báo cáo ở nơi khác.
+Sinh ra `tables/testset.tex`, `tables/results_by_tier.tex`, `tables/results_detail.tex` (phụ lục) và `figures/fig_{expanded,time,memory,length,scaling}.pdf`. Trung bình theo nhóm chỉ tính màn giải được (`valid`). Solver mới chỉ cần đăng ký trong `solvers/__init__.py` rồi chạy lại hai lệnh. `results.csv` bị `.gitignore`; bản dùng trong báo cáo là `figures/results_used_in_report.csv`.
 
 ## Khi đổi hàm cost hoặc thêm A\*
 
-- `run_experiments.py` và `plot_results.py` tự lấy số liệu mới (CSV có cột `cost`, hình `solution_cost.png`). Chạy lại cả hai.
+- `run_experiments.py` và `plot_results.py` tự lấy số liệu mới (CSV có cột `cost`; bảng nhóm có cột Cost, không vẽ riêng hình cost). Chạy lại cả hai.
 - `COST` trong `engine/engine.py` chỉ theo hướng (U/D/L/R/SWAP). Muốn cost phụ thuộc ô (phạt ô giòn, ưu đãi công tắc),
   truyền hàm `cost_fn(state, action, next_state)` vào `Engine(level, cost_fn=...)` hoặc gán `engine.step_cost = ...`.
 - `optimal_moves` là số nước tối thiểu (BFS), **không** phải chi phí tối thiểu: khi cost không đều, UCS/A* có thể dùng nhiều

@@ -1,6 +1,7 @@
 {
   "name": "Garden Path",
   "group": "basic",
+  "benchmark": true,
   "difficulty": 7,
   "hint": "Nhiều chỗ rẽ. Đi men theo mép ngoài, đừng chui vào ngõ cụt.",
   "optimal_moves": 11,

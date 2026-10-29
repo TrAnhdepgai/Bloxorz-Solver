@@ -13,7 +13,8 @@ from typing import Optional
 class SearchOutcome:
     path: Optional[list]      # danh sách action ['R','D',...]; None nếu không có lời giải
     cost: Optional[float]     # tổng step_cost của path
-    expanded: int             # số node đã mở rộng (đã sinh successors)
+    expanded: int             # số trạng thái được lấy ra và sinh hậu duệ (không tính node đích).
+                              # IDS cộng dồn qua mọi vòng lặp độ sâu.
 
 
 def build_path(node):

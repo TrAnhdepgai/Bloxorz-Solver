@@ -1,8 +1,15 @@
 """Module đo đạc dùng chung cho mọi solver (BFS/DFS/IDS/UCS/A*).
 
-Đo 4 thứ theo đề: Search Time, Peak Memory, Expanded Nodes, Solution Length.
-Thời gian và bộ nhớ được đo ở HAI lượt chạy riêng, vì tracemalloc làm chương trình chậm đi
-đáng kể và sẽ làm sai số đo thời gian.
+Đo đúng 4 đại lượng của mục Experiments:
+
+- Thời gian tìm kiếm: ``time.perf_counter()`` chỉ bọc lời gọi solver (không tính nạp màn).
+  Lặp ``repeats`` lần và lấy **trung vị** (mặc định 3 lần, xem ``run_experiments.py --repeat``).
+- Bộ nhớ đỉnh: ``tracemalloc`` trên **một lượt chạy riêng**, sau lượt bấm giờ.
+  ``tracemalloc`` làm chậm nên không được bật khi đo thời gian. Đơn vị lưu: KB.
+- Số node mở rộng: số trạng thái được lấy ra khỏi frontier và sinh hậu duệ
+  (node đích không tính). IDS **cộng dồn** qua mọi vòng lặp độ sâu.
+- Độ dài lời giải: số nước đi. ``cost`` là tổng step_cost (khác độ dài khi cost không đều).
+  Mọi path đều được phát lại trên engine (``replay_path``); chỉ ``valid=True`` mới tính là giải được.
 """
 import csv
 import gc
@@ -30,12 +37,19 @@ class SolveResult:
     path: Optional[list]
     group: str = ""                      # nhóm màn (basic/fragile/switch/combined), do run_experiments điền
     optimal_moves: Optional[int] = None  # số nước tối ưu lưu trong file level (BFS), để so sánh độ dài lời giải
+    name: str = ""
+    rows: Optional[int] = None           # số hàng của lưới (cột "Cỡ" trong testset)
+    cols: Optional[int] = None
+    bridge_cells: Optional[int] = None   # số Ô bridge, không phải số cây cầu
+    fragile_cells: Optional[int] = None
+    switch_types: str = ""               # "soft,heavy,split" hoặc rỗng
 
 
 def run_solver(solver, problem, level="", measure_memory=True, repeats=1):
     """Chạy một solver trên một problem, trả về SolveResult.
 
-    Thời gian = trung vị của `repeats` lần chạy (giảm nhiễu ở các màn chạy chỉ vài ms)."""
+    Thời gian = trung vị của `repeats` lần gọi solver (không gồm nạp màn, không bật tracemalloc).
+    Bộ nhớ đỉnh đo ở lượt riêng ngay sau đó."""
     name = solver.__name__
 
     # Lượt 1: đo thời gian (không bật tracemalloc)

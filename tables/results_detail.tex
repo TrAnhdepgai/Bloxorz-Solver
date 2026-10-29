@@ -1,0 +1,161 @@
+% Sinh bởi plot_results.py — không sửa tay. Phụ lục chi tiết từng màn.
+% \input{tables/results_detail.tex}
+{\textbf{Số node mở rộng}}\\[0.4em]
+\begin{tabular}{llrrrrr}
+\hline
+Màn & Nhóm & BFS & DFS & IDS & UCS & A$^*$ \\
+\hline
+06\_basic\_two\_rooms & Cơ bản & 92 & 102 & 618 & 95 & 73 \\
+07\_basic\_garden\_path & Cơ bản & 81 & 31 & 593 & 84 & 71 \\
+08\_basic\_courtyard & Cơ bản & 101 & 85 & 806 & 105 & 87 \\
+09\_fragile\_orange\_crossing & Ô giòn & 70 & 56 & 637 & 70 & 65 \\
+10\_fragile\_glass\_strip & Ô giòn & 36 & 35 & 96 & 39 & 27 \\
+11\_fragile\_side\_by\_side & Ô giòn & 84 & 69 & 1096 & 81 & 54 \\
+12\_fragile\_safe\_detour & Ô giòn & 93 & 131 & 570 & 103 & 39 \\
+13\_fragile\_fragile\_yard & Ô giòn & 224 & 167 & 1765 & 225 & 77 \\
+14\_switch\_soft\_touch & Công tắc & 135 & 108 & 746 & 138 & 82 \\
+15\_switch\_toggle\_once & Công tắc & 155 & 131 & 1087 & 154 & 110 \\
+16\_switch\_heavy\_step & Công tắc & 181 & 130 & 1734 & 177 & 106 \\
+17\_switch\_two\_bridges & Công tắc & 267 & 215 & 7262 & 273 & 211 \\
+18\_switch\_lower\_gate & Công tắc & 186 & 198 & 4724 & 194 & 136 \\
+19\_split\_split\_lesson & Công tắc & 2336 & 183 & 26903 & 2605 & 2324 \\
+20\_split\_two\_keys & Công tắc & 5562 & 239 & 56061 & 7607 & 5359 \\
+21\_split\_rejoin & Công tắc & 3100 & 198 & 54900 & 3554 & 2973 \\
+22\_combined\_glass\_gate & Kết hợp & 141 & 109 & 3049 & 142 & 116 \\
+23\_combined\_heavy\_glass & Kết hợp & 132 & 121 & 3833 & 132 & 115 \\
+24\_combined\_fragile\_approach & Kết hợp & 187 & 182 & 2596 & 183 & 132 \\
+25\_combined\_round\_the\_glass & Kết hợp & 270 & 154 & 4105 & 228 & 138 \\
+26\_combined\_double\_lock & Kết hợp & 310 & 307 & 16902 & 327 & 255 \\
+27\_combined\_last\_machine & Kết hợp & 438 & 362 & 27874 & 444 & 302 \\
+\hline
+\end{tabular}
+
+\vspace{1.1em}
+
+{\textbf{Thời gian tìm kiếm (ms)}}\\[0.4em]
+\begin{tabular}{llrrrrr}
+\hline
+Màn & Nhóm & BFS & DFS & IDS & UCS & A$^*$ \\
+\hline
+06\_basic\_two\_rooms & Cơ bản & 1.91 & 2.12 & 12.57 & 2.02 & 1.86 \\
+07\_basic\_garden\_path & Cơ bản & 1.46 & 0.67 & 11.43 & 1.81 & 1.53 \\
+08\_basic\_courtyard & Cơ bản & 1.71 & 1.58 & 16.06 & 2.13 & 1.89 \\
+09\_fragile\_orange\_crossing & Ô giòn & 1.23 & 1.29 & 12.42 & 1.49 & 1.66 \\
+10\_fragile\_glass\_strip & Ô giòn & 0.66 & 0.74 & 1.79 & 0.94 & 0.60 \\
+11\_fragile\_side\_by\_side & Ô giòn & 1.71 & 1.35 & 21.81 & 1.76 & 1.37 \\
+12\_fragile\_safe\_detour & Ô giòn & 1.88 & 2.99 & 12.62 & 2.26 & 1.01 \\
+13\_fragile\_fragile\_yard & Ô giòn & 5.73 & 4.08 & 46.07 & 5.36 & 2.22 \\
+14\_switch\_soft\_touch & Công tắc & 2.63 & 2.28 & 16.43 & 3.09 & 2.21 \\
+15\_switch\_toggle\_once & Công tắc & 3.05 & 2.74 & 23.21 & 3.21 & 2.83 \\
+16\_switch\_heavy\_step & Công tắc & 3.90 & 2.91 & 40.12 & 4.27 & 2.71 \\
+17\_switch\_two\_bridges & Công tắc & 5.33 & 4.49 & 164.67 & 6.38 & 6.71 \\
+18\_switch\_lower\_gate & Công tắc & 4.86 & 5.21 & 155.23 & 4.70 & 3.39 \\
+19\_split\_split\_lesson & Công tắc & 55.17 & 3.86 & 736.11 & 175.36 & 83.00 \\
+20\_split\_two\_keys & Công tắc & 140.26 & 5.70 & 1542.39 & 207.50 & 168.77 \\
+21\_split\_rejoin & Công tắc & 66.51 & 4.36 & 1583.12 & 130.35 & 103.37 \\
+22\_combined\_glass\_gate & Kết hợp & 3.42 & 2.76 & 72.68 & 5.92 & 4.97 \\
+23\_combined\_heavy\_glass & Kết hợp & 2.68 & 2.58 & 126.98 & 2.83 & 2.89 \\
+24\_combined\_fragile\_approach & Kết hợp & 4.78 & 3.98 & 57.88 & 3.90 & 3.22 \\
+25\_combined\_round\_the\_glass & Kết hợp & 6.78 & 3.37 & 150.65 & 7.01 & 5.11 \\
+26\_combined\_double\_lock & Kết hợp & 10.12 & 13.15 & 427.22 & 11.78 & 8.99 \\
+27\_combined\_last\_machine & Kết hợp & 9.52 & 8.93 & 756.50 & 9.02 & 6.80 \\
+\hline
+\end{tabular}
+
+\vspace{1.1em}
+
+{\textbf{Bộ nhớ đỉnh (KB)}}\\[0.4em]
+\begin{tabular}{llrrrrr}
+\hline
+Màn & Nhóm & BFS & DFS & IDS & UCS & A$^*$ \\
+\hline
+06\_basic\_two\_rooms & Cơ bản & 30.1 & 42.2 & 24.0 & 37.4 & 40.2 \\
+07\_basic\_garden\_path & Cơ bản & 27.2 & 16.2 & 20.0 & 35.5 & 33.0 \\
+08\_basic\_courtyard & Cơ bản & 30.5 & 32.3 & 24.6 & 37.8 & 42.1 \\
+09\_fragile\_orange\_crossing & Ô giòn & 17.7 & 22.8 & 19.0 & 22.3 & 26.8 \\
+10\_fragile\_glass\_strip & Ô giòn & 12.0 & 13.9 & 9.5 & 14.9 & 16.8 \\
+11\_fragile\_side\_by\_side & Ô giòn & 28.0 & 25.9 & 19.7 & 35.6 & 33.7 \\
+12\_fragile\_safe\_detour & Ô giòn & 30.2 & 57.6 & 24.8 & 41.2 & 29.4 \\
+13\_fragile\_fragile\_yard & Ô giòn & 56.3 & 79.6 & 48.3 & 72.1 & 68.8 \\
+14\_switch\_soft\_touch & Công tắc & 39.2 & 50.8 & 32.7 & 47.8 & 46.1 \\
+15\_switch\_toggle\_once & Công tắc & 44.4 & 61.7 & 38.5 & 52.8 & 56.2 \\
+16\_switch\_heavy\_step & Công tắc & 45.9 & 62.8 & 45.9 & 61.3 & 55.8 \\
+17\_switch\_two\_bridges & Công tắc & 62.0 & 97.7 & 64.8 & 79.5 & 80.5 \\
+18\_switch\_lower\_gate & Công tắc & 45.4 & 72.5 & 50.1 & 63.2 & 57.8 \\
+19\_split\_split\_lesson & Công tắc & 1032.8 & 104.7 & 979.7 & 1420.1 & 1263.6 \\
+20\_split\_two\_keys & Công tắc & 2769.6 & 172.5 & 2224.2 & 3954.9 & 3398.8 \\
+21\_split\_rejoin & Công tắc & 1350.2 & 115.2 & 1349.1 & 1785.6 & 1635.9 \\
+22\_combined\_glass\_gate & Kết hợp & 39.1 & 48.8 & 36.9 & 47.2 & 53.5 \\
+23\_combined\_heavy\_glass & Kết hợp & 34.9 & 47.3 & 35.2 & 42.8 & 49.0 \\
+24\_combined\_fragile\_approach & Kết hợp & 48.5 & 69.2 & 51.2 & 62.9 & 78.6 \\
+25\_combined\_round\_the\_glass & Kết hợp & 64.7 & 65.7 & 59.4 & 75.7 & 59.2 \\
+26\_combined\_double\_lock & Kết hợp & 97.7 & 144.1 & 73.9 & 116.8 & 100.7 \\
+27\_combined\_last\_machine & Kết hợp & 115.4 & 145.4 & 108.7 & 147.2 & 105.9 \\
+\hline
+\end{tabular}
+
+\vspace{1.1em}
+
+{\textbf{Độ dài lời giải (số nước)}}\\[0.4em]
+\begin{tabular}{llrrrrr}
+\hline
+Màn & Nhóm & BFS & DFS & IDS & UCS & A$^*$ \\
+\hline
+06\_basic\_two\_rooms & Cơ bản & 11 & 78 & 11 & 11 & 11 \\
+07\_basic\_garden\_path & Cơ bản & 11 & 30 & 11 & 11 & 11 \\
+08\_basic\_courtyard & Cơ bản & 14 & 57 & 14 & 14 & 14 \\
+09\_fragile\_orange\_crossing & Ô giòn & 12 & 49 & 12 & 13 & 13 \\
+10\_fragile\_glass\_strip & Ô giòn & 9 & 33 & 9 & 9 & 9 \\
+11\_fragile\_side\_by\_side & Ô giòn & 13 & 58 & 13 & 13 & 13 \\
+12\_fragile\_safe\_detour & Ô giòn & 10 & 112 & 10 & 11 & 11 \\
+13\_fragile\_fragile\_yard & Ô giòn & 11 & 150 & 11 & 13 & 13 \\
+14\_switch\_soft\_touch & Công tắc & 11 & 85 & 11 & 12 & 12 \\
+15\_switch\_toggle\_once & Công tắc & 12 & 102 & 12 & 12 & 12 \\
+16\_switch\_heavy\_step & Công tắc & 14 & 111 & 14 & 16 & 16 \\
+17\_switch\_two\_bridges & Công tắc & 21 & 194 & 21 & 23 & 23 \\
+18\_switch\_lower\_gate & Công tắc & 20 & 124 & 20 & 20 & 20 \\
+19\_split\_split\_lesson & Công tắc & 16 & 106 & 16 & 16 & 18 \\
+20\_split\_two\_keys & Công tắc & 17 & 202 & 17 & 17 & 19 \\
+21\_split\_rejoin & Công tắc & 19 & 130 & 19 & 19 & 19 \\
+22\_combined\_glass\_gate & Kết hợp & 16 & 81 & 16 & 17 & 17 \\
+23\_combined\_heavy\_glass & Kết hợp & 23 & 80 & 23 & 23 & 23 \\
+24\_combined\_fragile\_approach & Kết hợp & 15 & 109 & 15 & 15 & 15 \\
+25\_combined\_round\_the\_glass & Kết hợp & 18 & 125 & 18 & 19 & 19 \\
+26\_combined\_double\_lock & Kết hợp & 27 & 204 & 27 & 29 & 29 \\
+27\_combined\_last\_machine & Kết hợp & 39 & 189 & 39 & 40 & 40 \\
+\hline
+\end{tabular}
+
+\vspace{1.1em}
+
+{\textbf{Cost}}\\[0.4em]
+\begin{tabular}{llrrrrr}
+\hline
+Màn & Nhóm & BFS & DFS & IDS & UCS & A$^*$ \\
+\hline
+06\_basic\_two\_rooms & Cơ bản & 19.00 & 130.00 & 19.00 & 19.00 & 19.00 \\
+07\_basic\_garden\_path & Cơ bản & 19.00 & 50.00 & 19.00 & 19.00 & 19.00 \\
+08\_basic\_courtyard & Cơ bản & 26.00 & 93.00 & 26.00 & 26.00 & 26.00 \\
+09\_fragile\_orange\_crossing & Ô giòn & 20.00 & 79.00 & 20.00 & 19.00 & 19.00 \\
+10\_fragile\_glass\_strip & Ô giòn & 15.00 & 49.00 & 15.00 & 15.00 & 15.00 \\
+11\_fragile\_side\_by\_side & Ô giòn & 21.00 & 92.00 & 21.00 & 21.00 & 21.00 \\
+12\_fragile\_safe\_detour & Ô giòn & 18.00 & 188.00 & 18.00 & 17.00 & 17.00 \\
+13\_fragile\_fragile\_yard & Ô giòn & 19.00 & 244.00 & 19.00 & 17.00 & 17.00 \\
+14\_switch\_soft\_touch & Công tắc & 19.00 & 135.00 & 19.00 & 18.00 & 18.00 \\
+15\_switch\_toggle\_once & Công tắc & 20.00 & 162.00 & 20.00 & 20.00 & 20.00 \\
+16\_switch\_heavy\_step & Công tắc & 24.00 & 177.00 & 24.00 & 22.00 & 22.00 \\
+17\_switch\_two\_bridges & Công tắc & 37.00 & 308.00 & 37.00 & 35.00 & 35.00 \\
+18\_switch\_lower\_gate & Công tắc & 36.00 & 202.00 & 36.00 & 36.00 & 36.00 \\
+19\_split\_split\_lesson & Công tắc & 21.00 & 149.00 & 21.00 & 21.00 & 21.00 \\
+20\_split\_two\_keys & Công tắc & 24.00 & 286.00 & 24.00 & 24.00 & 24.00 \\
+21\_split\_rejoin & Công tắc & 26.00 & 185.00 & 26.00 & 24.00 & 24.00 \\
+22\_combined\_glass\_gate & Kết hợp & 24.00 & 127.00 & 24.00 & 23.00 & 23.00 \\
+23\_combined\_heavy\_glass & Kết hợp & 35.00 & 128.00 & 35.00 & 35.00 & 35.00 \\
+24\_combined\_fragile\_approach & Kết hợp & 21.00 & 173.00 & 21.00 & 21.00 & 21.00 \\
+25\_combined\_round\_the\_glass & Kết hợp & 34.00 & 197.00 & 34.00 & 27.00 & 27.00 \\
+26\_combined\_double\_lock & Kết hợp & 47.00 & 322.00 & 47.00 & 45.00 & 45.00 \\
+27\_combined\_last\_machine & Kết hợp & 71.00 & 303.00 & 71.00 & 66.00 & 66.00 \\
+\hline
+\end{tabular}
+
+\vspace{1.1em}
