@@ -2,7 +2,7 @@
   "name": "Round the Glass",
   "group": "combined",
   "difficulty": 25,
-   "benchmark": true,
+  "benchmark": true,
   "hint": "Công tắc nặng nằm sau một khúc vòng. Ô cam chặn đường tắt.",
   "optimal_moves": 18,
   "grid": [

@@ -2,7 +2,7 @@
   "name": "Glass Strip",
   "group": "fragile",
   "difficulty": 10,
-   "benchmark": true,
+  "benchmark": true,
   "hint": "Hai hàng cam chắn lối xuống. Nằm dọc đè qua, đừng đứng lên chúng.",
   "optimal_moves": 9,
   "grid": [

@@ -2,7 +2,7 @@
   "name": "Safe Detour",
   "group": "fragile",
   "difficulty": 12,
-   "benchmark": true,
+  "benchmark": true,
   "hint": "Đường giữa toàn ô cam. Vòng xuống dưới cho chắc.",
   "optimal_moves": 10,
   "grid": [

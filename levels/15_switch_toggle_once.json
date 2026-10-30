@@ -2,7 +2,7 @@
   "name": "Toggle Once",
   "group": "switch",
   "difficulty": 15,
-   "benchmark": true,
+  "benchmark": true,
   "hint": "Công tắc bật/tắt. Chỉ đạp một lần, nếu đạp lại cầu sẽ mất.",
   "optimal_moves": 12,
   "grid": [
