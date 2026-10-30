@@ -5,7 +5,7 @@ import pytest
 
 import engine.engine as engine_module
 from engine import Engine
-from engine.catalog import GROUPS, LEVEL_DIR, describe, dump_level, load_catalog, to_gui_level, validate
+from engine.catalog import GROUPS, describe, dump_level, load_catalog, to_gui_level, validate
 from engine.level import LevelError
 from solvers import bfs, ucs
 from solvers.base import replay_path
@@ -13,27 +13,45 @@ from solvers.base import replay_path
 ALL = load_catalog()
 BENCH = load_catalog(benchmark_only=True)
 
+# Màn 01–05 là tutorial basic (không đưa vào báo cáo). Từ difficulty 6 trở đi đều là benchmark.
+# Không còn đúng 3 màn/nhóm: basic chỉ lấy 3 màn khó, ba nhóm kia lấy cả chiến dịch.
+BENCHMARK_COUNTS = {"basic": 3, "fragile": 5, "switch": 8, "combined": 6}
+# Ô sàn của màn benchmark lớn nhất mỗi nhóm (catalog hiện tại, không phải ngưỡng 75 cũ).
+MIN_LARGEST_FLOOR = {"basic": 50, "fragile": 75, "switch": 50, "combined": 75}
+
 
 def test_catalog_not_empty_and_ids_unique():
     assert ALL and len({e["id"] for e in ALL}) == len(ALL)
+    assert [e["data"]["difficulty"] for e in ALL] == list(range(1, len(ALL) + 1))
 
 
 @pytest.mark.parametrize("entry", ALL, ids=lambda e: e["id"])
 def test_file_name_matches_group(entry):
-    assert entry["id"].startswith(entry["data"]["group"] + "_")
+    """Tên file: NN_<chủ đề>_<slug>, NN trùng difficulty.
+    Chủ đề là group, trừ màn tách khối (19–21) ghi `split` nhưng vẫn thuộc group `switch`."""
+    group = entry["data"]["group"]
+    diff = entry["data"]["difficulty"]
+    prefix = f"{diff:02d}_"
+    assert entry["id"].startswith(prefix), entry["id"]
+    topic = entry["id"][len(prefix):].split("_", 1)[0]
+    allowed = {group, "split"} if group == "switch" else {group}
+    assert topic in allowed, entry["id"]
 
 
-def test_benchmark_has_four_groups_of_three():
-    for group in GROUPS:
-        in_group = [e for e in BENCH if e["data"]["group"] == group]
-        assert len(in_group) == 3, f"nhóm {group} có {len(in_group)} màn benchmark (cần 3)"
+def test_benchmark_counts_match_catalog():
+    got = {group: sum(e["data"]["group"] == group for e in BENCH) for group in GROUPS}
+    assert got == BENCHMARK_COUNTS, got
+    for entry in ALL:
+        ranked = entry["data"]["difficulty"] >= 6
+        assert bool(entry["data"].get("benchmark")) is ranked, entry["id"]
 
 
 def test_each_group_has_a_large_level():
-    """Mỗi nhóm có ít nhất một màn 'đủ lớn' để thấy khác biệt giữa các thuật toán."""
-    for group in GROUPS:
+    """Mỗi nhóm có một màn đủ rộng để các thuật toán không cùng một lời giải tầm thường.
+    basic/switch khoảng 50 ô; fragile và combined vẫn có màn >= 75 ô."""
+    for group, minimum in MIN_LARGEST_FLOOR.items():
         largest = max(describe(e["data"])["floor"] for e in BENCH if e["data"]["group"] == group)
-        assert largest >= 75, f"nhóm {group}: màn lớn nhất chỉ có {largest} ô sàn"
+        assert largest >= minimum, f"nhóm {group}: màn lớn nhất chỉ có {largest} ô sàn (cần >= {minimum})"
 
 
 def test_benchmark_covers_every_mechanic():
@@ -66,9 +84,13 @@ def test_campaign_levels_optimal_moves_correct(entry):
 
 @pytest.mark.parametrize("entry", ALL, ids=lambda e: e["id"])
 def test_dump_roundtrip_is_stable(entry):
-    """File trên đĩa đúng bằng định dạng chuẩn -> compute_optimal.py ghi lại không tạo diff thừa."""
-    assert entry["path"].read_text(encoding="utf-8") == dump_level(entry["data"])
-    assert json.loads(dump_level(entry["data"])) == entry["data"]
+    """File trên đĩa là JSON pretty-print, không byte-khớp dump_level (writer gọn của compute_optimal.py).
+    So nội dung đã parse. dump_level phải không mất trường và ghi hai lần ra cùng một chuỗi."""
+    raw = entry["path"].read_text(encoding="utf-8")
+    assert json.loads(raw) == entry["data"]
+    dumped = dump_level(entry["data"])
+    assert json.loads(dumped) == entry["data"]
+    assert dump_level(json.loads(dumped)) == dumped
 
 
 @pytest.mark.parametrize("entry", ALL, ids=lambda e: e["id"])
